@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookstore Tester - Books</title>
+    <style>
+        body { font-family: "Segoe UI", Tahoma, sans-serif; margin: 0; background: #f4f6fb; color: #1f2937; }
+        .container { max-width: 1100px; margin: 20px auto; padding: 0 14px; }
+        .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+        .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+        .field { min-width: 180px; flex: 1; }
+        label { display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px; }
+        input { width: 100%; padding: 9px; border: 1px solid #d1d5db; border-radius: 8px; }
+        button, a.btn { padding: 9px 12px; border: 0; border-radius: 8px; background: #2563eb; color: #fff; cursor: pointer; text-decoration: none; display: inline-block; }
+        button.alt, a.btn.alt { background: #374151; }
+        button.ghost { background: #e5e7eb; color: #111827; }
+        .status { margin-top: 8px; font-size: 13px; white-space: pre-wrap; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+        .pager { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Bookstore Backend Tester</h1>
+
+    <div class="card">
+        <h3>Auth (Basic Auth for protected endpoints)</h3>
+        <div class="row">
+            <div class="field"><label>Email</label><input id="email" placeholder="user@example.com"></div>
+            <div class="field"><label>Password</label><input id="password" type="password" placeholder="password"></div>
+            <button id="saveAuth">Save Auth</button>
+            <button id="testLogin" class="alt">Test Login</button>
+            <a class="btn ghost" href="/cart.html">Open Cart</a>
+        </div>
+        <div id="authStatus" class="status"></div>
+    </div>
+
+    <div class="card">
+        <h3>Books Search + Pagination</h3>
+        <div class="row">
+            <div class="field"><label>Title contains</label><input id="titleFilter" placeholder="clean code"></div>
+            <div class="field"><label>Category ID (optional)</label><input id="categoryId" type="number" min="1" placeholder="1"></div>
+            <div class="field"><label>Page size</label><input id="size" type="number" min="1" value="10"></div>
+            <button id="searchBtn">Search</button>
+            <button id="resetBtn" class="ghost">Reset</button>
+        </div>
+        <div id="bookStatus" class="status"></div>
+        <table>
+            <thead>
+            <tr><th>ID</th><th>Title</th><th>Price</th><th>Stock</th><th>Author</th><th>Action</th></tr>
+            </thead>
+            <tbody id="bookRows"></tbody>
+        </table>
+        <div class="pager">
+            <button id="prevBtn" class="ghost">Prev</button>
+            <span id="pageInfo">Page 1</span>
+            <button id="nextBtn" class="ghost">Next</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let page = 0;
+    let totalPages = 1;
+
+    function getCreds() {
+        return {
+            email: document.getElementById("email").value.trim(),
+            password: document.getElementById("password").value
+        };
+    }
+
+    function setStatus(id, msg) { document.getElementById(id).textContent = msg; }
+
+    function authHeader() {
+        const c = getCreds();
+        if (!c.email || !c.password) return null;
+        return "Basic " + btoa(c.email + ":" + c.password);
+    }
+
+    async function req(url, options = {}) {
+        const res = await fetch(url, options);
+        const text = await res.text();
+        let body = text;
+        try { body = JSON.parse(text); } catch (_) {}
+        if (!res.ok) throw new Error(typeof body === "string" ? body : JSON.stringify(body));
+        return body;
+    }
+
+    async function loadBooks() {
+        const title = document.getElementById("titleFilter").value.trim();
+        const categoryId = document.getElementById("categoryId").value.trim();
+        const size = parseInt(document.getElementById("size").value || "10", 10);
+        const params = new URLSearchParams({ page: String(page), size: String(size) });
+
+        let url = "/api/books";
+        if (title || categoryId) {
+            url = "/api/books/search";
+            if (title) params.append("title", title);
+            if (categoryId) params.append("categoryId", categoryId);
+        }
+
+        try {
+            const data = await req(url + "?" + params.toString());
+            totalPages = Math.max(1, data.totalPages || 1);
+            document.getElementById("pageInfo").textContent = `Page ${page + 1} / ${totalPages}`;
+            setStatus("bookStatus", `Loaded ${data.numberOfElements} books`);
+            const rows = (data.content || []).map(b => `
+                <tr>
+                    <td>${b.id}</td>
+                    <td>${b.title}</td>
+                    <td>${b.price}</td>
+                    <td>${b.stock}</td>
+                    <td>${b.authorName || ""}</td>
+                    <td><a class="btn alt" href="/book.html?id=${b.id}">View</a></td>
+                </tr>
+            `).join("");
+            document.getElementById("bookRows").innerHTML = rows || "<tr><td colspan='6'>No results</td></tr>";
+        } catch (e) {
+            setStatus("bookStatus", "Failed: " + e.message);
+        }
+    }
+
+    document.getElementById("searchBtn").onclick = () => { page = 0; loadBooks(); };
+    document.getElementById("resetBtn").onclick = () => {
+        document.getElementById("titleFilter").value = "";
+        document.getElementById("categoryId").value = "";
+        page = 0;
+        loadBooks();
+    };
+    document.getElementById("prevBtn").onclick = () => { if (page > 0) { page--; loadBooks(); } };
+    document.getElementById("nextBtn").onclick = () => { if (page < totalPages - 1) { page++; loadBooks(); } };
+
+    document.getElementById("saveAuth").onclick = () => {
+        const c = getCreds();
+        localStorage.setItem("tester_email", c.email);
+        localStorage.setItem("tester_password", c.password);
+        setStatus("authStatus", "Auth saved in browser storage");
+    };
+
+    document.getElementById("testLogin").onclick = async () => {
+        const c = getCreds();
+        try {
+            const res = await req("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(c)
+            });
+            setStatus("authStatus", "Login OK: " + res);
+        } catch (e) {
+            setStatus("authStatus", "Login failed: " + e.message);
+        }
+    };
+
+    (function bootstrap() {
+        const email = localStorage.getItem("tester_email") || "";
+        const pw = localStorage.getItem("tester_password") || "";
+        document.getElementById("email").value = email;
+        document.getElementById("password").value = pw;
+        loadBooks();
+    })();
+</script>
+</body>
+</html>
