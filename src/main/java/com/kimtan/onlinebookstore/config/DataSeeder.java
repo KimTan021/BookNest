@@ -37,8 +37,46 @@ public class DataSeeder implements CommandLineRunner {
     @Transactional
     public void run(String... args) {
         log.info("Resetting and seeding catalog data");
+        repairBookForeignKeyIfNeeded("cart_items", "fk_cart_items_books");
+        repairBookForeignKeyIfNeeded("order_items", "fk_order_items_books");
         resetCatalogData();
         seedCatalogData();
+    }
+
+    private void repairBookForeignKeyIfNeeded(String tableName, String expectedConstraintName) {
+        if (!isMySql()) {
+            return;
+        }
+
+        List<String> wrongConstraints = jdbcTemplate.queryForList("""
+                SELECT CONSTRAINT_NAME
+                FROM information_schema.KEY_COLUMN_USAGE
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND TABLE_NAME = ?
+                  AND COLUMN_NAME = 'book_id'
+                  AND REFERENCED_TABLE_NAME = 'book'
+                """, String.class, tableName);
+
+        for (String constraint : wrongConstraints) {
+            log.info("Repairing {}.book_id FK: dropping {}", tableName, constraint);
+            jdbcTemplate.execute("ALTER TABLE " + tableName + " DROP FOREIGN KEY `" + constraint + "`");
+        }
+
+        Integer validConstraintCount = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*)
+                FROM information_schema.KEY_COLUMN_USAGE
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND TABLE_NAME = ?
+                  AND COLUMN_NAME = 'book_id'
+                  AND REFERENCED_TABLE_NAME = 'books'
+                """, Integer.class, tableName);
+
+        if (validConstraintCount == null || validConstraintCount == 0) {
+            log.info("Adding {}.book_id FK to books(id)", tableName);
+            jdbcTemplate.execute("ALTER TABLE " + tableName +
+                    " ADD CONSTRAINT " + expectedConstraintName +
+                    " FOREIGN KEY (book_id) REFERENCES books(id)");
+        }
     }
 
     private void resetCatalogData() {

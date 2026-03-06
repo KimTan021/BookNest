@@ -47,6 +47,10 @@ logs/
 .env.*
 *.local
 
+### Frontend ###
+frontend/node_modules/
+frontend/dist/
+
 ### Maven release/plugin artifacts ###
 release.properties
 pom.xml.tag
