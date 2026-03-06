@@ -17,6 +17,7 @@ public class BookResponseDTO {
     private BigDecimal price;
     private Integer stock;
     private String imageUrl;
+    private Long authorId;
     private String authorName;
     private String categoryName;
 }

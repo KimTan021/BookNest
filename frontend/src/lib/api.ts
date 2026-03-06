@@ -1,6 +1,7 @@
 import type {
   ApiErrorResponse,
   AuthResponse,
+  AuthorDetails,
   Book,
   Category,
   Cart,
@@ -94,6 +95,10 @@ export async function listCategories(): Promise<Category[]> {
 
 export async function getBook(bookId: number): Promise<Book> {
   return request<Book>(`/api/books/${bookId}`);
+}
+
+export async function getAuthor(authorId: number): Promise<AuthorDetails> {
+  return request<AuthorDetails>(`/api/authors/${authorId}`);
 }
 
 export async function getCart(token: string): Promise<Cart> {

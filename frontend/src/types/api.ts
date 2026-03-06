@@ -40,6 +40,7 @@ export interface Book {
   price: number;
   stock: number;
   imageUrl: string;
+  authorId: number | null;
   authorName: string;
   categoryName: string;
 }
@@ -47,6 +48,20 @@ export interface Book {
 export interface Category {
   id: number;
   name: string;
+}
+
+export interface AuthorBook {
+  id: number;
+  title: string;
+  price: number;
+  imageUrl: string;
+}
+
+export interface AuthorDetails {
+  id: number;
+  name: string;
+  bio: string | null;
+  books: AuthorBook[];
 }
 
 export interface CartItem {

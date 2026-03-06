@@ -3,6 +3,7 @@ import { Layout } from "./components/Layout";
 import { RequireAuth } from "./components/RequireAuth";
 import { LoginPage } from "./features/auth/LoginPage";
 import { RegisterPage } from "./features/auth/RegisterPage";
+import { AuthorPage } from "./features/authors/AuthorPage";
 import { BookDetailsPage } from "./features/books/BookDetailsPage";
 import { BooksPage } from "./features/books/BooksPage";
 import { CartPage } from "./features/cart/CartPage";
@@ -14,6 +15,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<BooksPage />} />
         <Route path="/books/:id" element={<BookDetailsPage />} />
+        <Route path="/authors/:id" element={<AuthorPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route

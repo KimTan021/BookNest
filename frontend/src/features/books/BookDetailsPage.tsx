@@ -116,7 +116,13 @@ export function BookDetailsPage() {
                   {book.title}
                 </Typography>
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-                  {book.authorName}
+                  {book.authorId ? (
+                    <Link to={`/authors/${book.authorId}`} style={{ textDecoration: "none", color: "inherit" }}>
+                      {book.authorName}
+                    </Link>
+                  ) : (
+                    book.authorName
+                  )}
                 </Typography>
 
                 <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: "wrap" }}>

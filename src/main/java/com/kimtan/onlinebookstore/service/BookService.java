@@ -63,6 +63,7 @@ public class BookService {
     private BookResponseDTO mapToDTO(Book book) {
         String authorName = book.getAuthor() != null ? book.getAuthor().getName() : "Unknown Author";
         String categoryName = book.getCategory() != null ? book.getCategory().getName() : "Uncategorized";
+        Long authorId = book.getAuthor() != null ? book.getAuthor().getId() : null;
 
         return BookResponseDTO.builder()
                 .id(book.getId())
@@ -71,6 +72,7 @@ public class BookService {
                 .price(book.getPrice())
                 .stock(book.getStock())
                 .imageUrl(book.getImageUrl())
+                .authorId(authorId)
                 .authorName(authorName)
                 .categoryName(categoryName)
                 .build();
