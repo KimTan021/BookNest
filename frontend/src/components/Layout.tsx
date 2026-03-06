@@ -72,7 +72,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 letterSpacing: "-0.012em"
               }}
             >
-              Online Bookstore
+              Kim's Online Bookstore
             </Typography>
 
             <Stack
