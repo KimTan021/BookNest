@@ -49,11 +49,14 @@ export function RegisterPage() {
   }
 
   return (
-    <Box sx={{ maxWidth: 460 }}>
+    <Box sx={{ maxWidth: 460, mx: "auto", mt: { xs: 1, md: 3 } }}>
       <Card>
         <CardContent>
           <Typography component="h1" variant="h5" sx={{ mb: 2 }}>
             Create account
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+            Join the bookstore for personalized cart and order history.
           </Typography>
           <Stack component="form" spacing={2} onSubmit={onSubmit}>
             <TextField

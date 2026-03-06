@@ -75,6 +75,9 @@ export function OrdersPage() {
       <Typography variant="h5" component="h1" sx={{ mb: 2 }}>
         Order history
       </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        Review completed checkouts with itemized details and timestamps.
+      </Typography>
       {loading ? (
         <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
           <CircularProgress size={18} />

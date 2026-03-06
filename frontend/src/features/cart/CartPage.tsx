@@ -129,6 +129,9 @@ export function CartPage() {
           <Typography variant="h5" component="h1" sx={{ mb: 2 }}>
             Cart
           </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Quantities update instantly and sync in the background.
+          </Typography>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mb: 2 }}>
             <Button type="button" variant="outlined" color="error" onClick={() => setClearDialogOpen(true)}>
               Clear cart
@@ -216,6 +219,7 @@ export function CartPage() {
           <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
             <Chip
               color="primary"
+              variant="outlined"
               label={`Total: $${calculatedTotal.toFixed(2)}`}
               sx={{ fontWeight: 700, px: 1 }}
             />

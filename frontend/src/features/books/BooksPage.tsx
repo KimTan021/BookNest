@@ -128,6 +128,9 @@ export function BooksPage() {
           <Typography variant="h5" component="h1" sx={{ mb: 2 }}>
             Browse books
           </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Discover your next read with lightweight filtering and fast add-to-cart.
+          </Typography>
           <Stack
             component="form"
             onSubmit={(event) => {
@@ -189,8 +192,16 @@ export function BooksPage() {
               Reset
             </Button>
           </Stack>
-        {status ? <p className="status">{status}</p> : null}
-        {loading ? <p>Loading books...</p> : null}
+          {status ? (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {status}
+            </Alert>
+          ) : null}
+          {loading ? (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+              Loading books...
+            </Typography>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -210,7 +221,17 @@ export function BooksPage() {
             ))
           : (booksPage?.content ?? []).map((book) => (
               <Grid key={book.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-                <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+                <Card
+                  sx={{
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    "&:hover": {
+                      transform: "translateY(-4px)",
+                      boxShadow: "0 20px 36px rgba(15, 15, 20, 0.12)"
+                    }
+                  }}
+                >
                   <CardMedia
                     component="img"
                     height="250"

@@ -42,11 +42,14 @@ export function LoginPage() {
   }
 
   return (
-    <Box sx={{ maxWidth: 460 }}>
+    <Box sx={{ maxWidth: 460, mx: "auto", mt: { xs: 1, md: 3 } }}>
       <Card>
         <CardContent>
           <Typography component="h1" variant="h5" sx={{ mb: 2 }}>
             Login
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+            Sign in to continue your shopping and checkout flow.
           </Typography>
           <Stack component="form" spacing={2} onSubmit={onSubmit}>
             <TextField

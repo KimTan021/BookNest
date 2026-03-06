@@ -1,4 +1,5 @@
 import AppBar from "@mui/material/AppBar";
+import { alpha } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
@@ -8,9 +9,11 @@ import Typography from "@mui/material/Typography";
 import type { ReactNode } from "react";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import { useAuth } from "../state/AuthContext";
+import { useThemeMode } from "../state/ThemeModeContext";
 
 export function Layout({ children }: { children: ReactNode }) {
   const { isAuthenticated, logout } = useAuth();
+  const { mode, toggleMode } = useThemeMode();
   const location = useLocation();
 
   function isActive(path: string): boolean {
@@ -28,12 +31,17 @@ export function Layout({ children }: { children: ReactNode }) {
         to={path}
         variant={isActive(path) ? "contained" : "text"}
         color="inherit"
-        sx={{
+        sx={(theme) => ({
           textTransform: "none",
           ...(isActive(path)
-            ? { bgcolor: "rgba(255,255,255,0.2)", "&:hover": { bgcolor: "rgba(255,255,255,0.28)" } }
+            ? {
+                bgcolor: alpha(theme.palette.text.primary, theme.palette.mode === "dark" ? 0.28 : 0.12),
+                "&:hover": {
+                  bgcolor: alpha(theme.palette.text.primary, theme.palette.mode === "dark" ? 0.34 : 0.18)
+                }
+              }
             : {})
-        }}
+        })}
       >
         {label}
       </Button>
@@ -42,9 +50,16 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <Box>
-      <AppBar position="static" color="primary">
+      <AppBar position="sticky" color="primary">
         <Container maxWidth="lg">
-          <Toolbar disableGutters sx={{ gap: 2, minHeight: 64 }}>
+          <Toolbar
+            disableGutters
+            sx={{
+              gap: 2,
+              minHeight: 72,
+              py: 1
+            }}
+          >
             <Typography
               component={RouterLink}
               to="/"
@@ -53,14 +68,29 @@ export function Layout({ children }: { children: ReactNode }) {
                 color: "inherit",
                 textDecoration: "none",
                 fontWeight: 700,
-                whiteSpace: "nowrap"
+                whiteSpace: "nowrap",
+                letterSpacing: "-0.012em"
               }}
             >
               Online Bookstore
             </Typography>
 
-            <Stack direction="row" spacing={0.5} sx={{ ml: "auto", flexWrap: "wrap" }}>
+            <Stack
+              direction="row"
+              spacing={0.75}
+              sx={(theme) => ({
+                ml: "auto",
+                flexWrap: "wrap",
+                p: 0.5,
+                borderRadius: 999,
+                backgroundColor: alpha(theme.palette.background.paper, theme.palette.mode === "dark" ? 0.78 : 0.52),
+                border: `1px solid ${theme.palette.divider}`
+              })}
+            >
               {navButton("/", "Books")}
+              <Button onClick={toggleMode} color="inherit" variant="text">
+                {mode === "light" ? "Dark" : "Light"}
+              </Button>
               {isAuthenticated ? (
                 <>
                   {navButton("/cart", "Cart")}
@@ -69,7 +99,7 @@ export function Layout({ children }: { children: ReactNode }) {
                     onClick={logout}
                     color="inherit"
                     variant="outlined"
-                    sx={{ textTransform: "none", borderColor: "rgba(255,255,255,0.5)" }}
+                    sx={(theme) => ({ textTransform: "none", borderColor: theme.palette.divider })}
                   >
                     Logout
                   </Button>
@@ -85,7 +115,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </Container>
       </AppBar>
 
-      <Container maxWidth="lg" sx={{ py: 3 }}>
+      <Container maxWidth="lg" sx={{ py: 3.5 }}>
         {children}
       </Container>
     </Box>
