@@ -11,6 +11,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import com.kimtan.onlinebookstore.dto.auth.AuthResponse;
 
 @ExtendWith(MockitoExtension.class)
 class AuthControllerWebMvcTest {
@@ -32,6 +34,8 @@ class AuthControllerWebMvcTest {
 
     @Test
     void registerDelegatesToService() {
+        when(authService.register("Kim", "Tan", "kim@test.com", "secret123"))
+                .thenReturn(new AuthResponse("token", "Bearer", 3600));
         authController.register(registerRequest);
 
         verify(authService).register("Kim", "Tan", "kim@test.com", "secret123");
@@ -39,6 +43,8 @@ class AuthControllerWebMvcTest {
 
     @Test
     void loginDelegatesToService() {
+        when(authService.login("kim@test.com", "secret123"))
+                .thenReturn(new AuthResponse("token", "Bearer", 3600));
         authController.login(loginRequest);
 
         verify(authService).login("kim@test.com", "secret123");

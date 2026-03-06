@@ -41,17 +41,10 @@
     const params = new URLSearchParams(window.location.search);
     const bookId = params.get("id");
 
-    function creds() {
-        return {
-            email: localStorage.getItem("tester_email") || "",
-            password: localStorage.getItem("tester_password") || ""
-        };
-    }
-
     function authHeader() {
-        const c = creds();
-        if (!c.email || !c.password) return null;
-        return "Basic " + btoa(c.email + ":" + c.password);
+        const token = localStorage.getItem("tester_token") || "";
+        if (!token) return null;
+        return "Bearer " + token;
     }
 
     async function req(url, options = {}) {
@@ -93,7 +86,7 @@
         const quantity = parseInt(document.getElementById("qty").value || "1", 10);
         const hdr = authHeader();
         if (!hdr) {
-            document.getElementById("status").textContent = "Missing saved auth. Go back to / and save email/password first.";
+            document.getElementById("status").textContent = "Missing JWT token. Go back to / and click Test Login first.";
             return;
         }
         try {

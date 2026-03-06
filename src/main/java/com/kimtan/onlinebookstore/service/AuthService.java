@@ -1,12 +1,16 @@
 package com.kimtan.onlinebookstore.service;
 
+import com.kimtan.onlinebookstore.dto.auth.AuthResponse;
 import com.kimtan.onlinebookstore.exception.ConflictException;
 import com.kimtan.onlinebookstore.entity.Cart;
 import com.kimtan.onlinebookstore.entity.User;
 import com.kimtan.onlinebookstore.repository.CartRepository;
 import com.kimtan.onlinebookstore.repository.UserRepository;
+import com.kimtan.onlinebookstore.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -18,11 +22,12 @@ public class AuthService {
     private final CartRepository cartRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
 
-    public void register(String firstName,
-                         String lastName,
-                         String email,
-                         String password) {
+    public AuthResponse register(String firstName,
+                                 String lastName,
+                                 String email,
+                                 String password) {
 
         if (userRepository.existsByEmail(email)) {
             throw new ConflictException("Email already exists");
@@ -36,20 +41,27 @@ public class AuthService {
                 .role("ROLE_USER")
                 .build();
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
 
         // Create cart automatically
         Cart cart = Cart.builder()
-                .user(user)
+                .user(savedUser)
                 .build();
 
         cartRepository.save(cart);
+
+        String token = jwtUtil.generateToken(savedUser);
+        return new AuthResponse(token, "Bearer", jwtUtil.getExpirationInSeconds());
     }
 
-    public void login(String email, String password) {
+    public AuthResponse login(String email, String password) {
 
-        authenticationManager.authenticate(
+        Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, password)
         );
+
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String token = jwtUtil.generateToken(userDetails);
+        return new AuthResponse(token, "Bearer", jwtUtil.getExpirationInSeconds());
     }
 }

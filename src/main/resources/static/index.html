@@ -26,11 +26,11 @@
     <h1>Bookstore Backend Tester</h1>
 
     <div class="card">
-        <h3>Auth (Basic Auth for protected endpoints)</h3>
+        <h3>Auth (JWT for protected endpoints)</h3>
         <div class="row">
             <div class="field"><label>Email</label><input id="email" placeholder="user@example.com"></div>
             <div class="field"><label>Password</label><input id="password" type="password" placeholder="password"></div>
-            <button id="saveAuth">Save Auth</button>
+            <button id="saveAuth">Save Credentials</button>
             <button id="testLogin" class="alt">Test Login</button>
             <a class="btn ghost" href="/cart.html">Open Cart</a>
         </div>
@@ -73,12 +73,6 @@
     }
 
     function setStatus(id, msg) { document.getElementById(id).textContent = msg; }
-
-    function authHeader() {
-        const c = getCreds();
-        if (!c.email || !c.password) return null;
-        return "Basic " + btoa(c.email + ":" + c.password);
-    }
 
     async function req(url, options = {}) {
         const res = await fetch(url, options);
@@ -137,7 +131,7 @@
         const c = getCreds();
         localStorage.setItem("tester_email", c.email);
         localStorage.setItem("tester_password", c.password);
-        setStatus("authStatus", "Auth saved in browser storage");
+        setStatus("authStatus", "Credentials saved in browser storage");
     };
 
     document.getElementById("testLogin").onclick = async () => {
@@ -148,7 +142,8 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(c)
             });
-            setStatus("authStatus", "Login OK: " + res);
+            localStorage.setItem("tester_token", res.accessToken);
+            setStatus("authStatus", "Login OK. JWT saved (expires in " + res.expiresInSeconds + "s)");
         } catch (e) {
             setStatus("authStatus", "Login failed: " + e.message);
         }

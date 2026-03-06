@@ -45,15 +45,14 @@
 
 <script>
     function authHeader() {
-        const email = localStorage.getItem("tester_email") || "";
-        const password = localStorage.getItem("tester_password") || "";
-        if (!email || !password) return null;
-        return "Basic " + btoa(email + ":" + password);
+        const token = localStorage.getItem("tester_token") || "";
+        if (!token) return null;
+        return "Bearer " + token;
     }
 
     async function req(url, options = {}) {
         const hdr = authHeader();
-        if (!hdr) throw new Error("Missing saved auth in browser. Go to / and save email/password.");
+        if (!hdr) throw new Error("Missing JWT token in browser. Go to / and click Test Login.");
         options.headers = Object.assign({}, options.headers || {}, { "Authorization": hdr });
         const res = await fetch(url, options);
         const text = await res.text();

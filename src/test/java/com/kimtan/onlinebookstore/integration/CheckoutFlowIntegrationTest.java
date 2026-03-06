@@ -14,6 +14,7 @@ import com.kimtan.onlinebookstore.repository.CategoryRepository;
 import com.kimtan.onlinebookstore.repository.OrderItemRepository;
 import com.kimtan.onlinebookstore.repository.OrderRepository;
 import com.kimtan.onlinebookstore.repository.UserRepository;
+import com.kimtan.onlinebookstore.security.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,9 +29,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
-import java.util.Base64;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -70,6 +69,9 @@ class CheckoutFlowIntegrationTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     private User testUser;
     private Book testBook;
@@ -122,9 +124,10 @@ class CheckoutFlowIntegrationTest {
 
     @Test
     void checkoutEndpointCompletesEndToEndFlow() throws Exception {
+        String token = jwtUtil.generateToken(testUser);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url("/api/orders/checkout")))
-                .header("Authorization", basicAuth("integration@test.com", "secret123"))
+                .header("Authorization", "Bearer " + token)
                 .POST(HttpRequest.BodyPublishers.noBody())
                 .build();
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -137,11 +140,5 @@ class CheckoutFlowIntegrationTest {
         assertEquals(8, bookRepository.findById(testBook.getId()).orElseThrow().getStock());
         Long cartId = cartRepository.findByUserId(testUser.getId()).orElseThrow().getId();
         assertTrue(cartItemRepository.findByCartIdAndBookId(cartId, testBook.getId()).isEmpty());
-    }
-
-    private String basicAuth(String username, String password) {
-        String credentials = username + ":" + password;
-        String encoded = Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
-        return "Basic " + encoded;
     }
 }
