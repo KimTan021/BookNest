@@ -61,17 +61,19 @@ export function Layout({ children }: { children: ReactNode }) {
 
             <Stack direction="row" spacing={0.5} sx={{ ml: "auto", flexWrap: "wrap" }}>
               {navButton("/", "Books")}
-              {navButton("/cart", "Cart")}
-              {navButton("/orders", "Orders")}
               {isAuthenticated ? (
-                <Button
-                  onClick={logout}
-                  color="inherit"
-                  variant="outlined"
-                  sx={{ textTransform: "none", borderColor: "rgba(255,255,255,0.5)" }}
-                >
-                  Logout
-                </Button>
+                <>
+                  {navButton("/cart", "Cart")}
+                  {navButton("/orders", "Orders")}
+                  <Button
+                    onClick={logout}
+                    color="inherit"
+                    variant="outlined"
+                    sx={{ textTransform: "none", borderColor: "rgba(255,255,255,0.5)" }}
+                  >
+                    Logout
+                  </Button>
+                </>
               ) : (
                 <>
                   {navButton("/login", "Login")}
