@@ -8,6 +8,7 @@ import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
+import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -97,8 +98,8 @@ export function BookDetailsPage() {
 
       {!loading && book ? (
         <Card>
-          <CardContent sx={{ p: { xs: 2, md: 2.5 } }}>
-            <Stack direction={{ xs: "column", md: "row" }} spacing={2.5}>
+          <CardContent sx={{ p: { xs: 2.25, md: 3 } }}>
+            <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 2.5, md: 4 }}>
               <CardMedia
                 component="img"
                 image={book.imageUrl || "https://placehold.co/340x500?text=Book"}
@@ -107,15 +108,16 @@ export function BookDetailsPage() {
                   width: { xs: "100%", md: 320 },
                   maxWidth: 360,
                   borderRadius: 3,
-                  objectFit: "cover"
+                  objectFit: "cover",
+                  alignSelf: { md: "flex-start" }
                 }}
               />
 
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="h5" component="h1" sx={{ mb: 0.5 }}>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="h5" component="h1" sx={{ mb: 0.75 }}>
                   {book.title}
                 </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 2.25 }}>
                   {book.authorId ? (
                     <Link to={`/authors/${book.authorId}`} style={{ textDecoration: "none", color: "inherit" }}>
                       {book.authorName}
@@ -130,15 +132,23 @@ export function BookDetailsPage() {
                   <Chip label={`Stock: ${book.stock}`} color={book.stock > 0 ? "success" : "default"} />
                 </Stack>
 
-                <Typography variant="h5" color="primary" sx={{ mb: 1.5 }}>
+                <Typography variant="h5" color="primary" sx={{ mb: 2 }}>
                   ${Number(book.price).toFixed(2)}
                 </Typography>
 
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 2.5 }}>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 2.5, lineHeight: 1.7 }}>
                   {book.description}
                 </Typography>
 
-                <Stack component="form" direction={{ xs: "column", sm: "row" }} spacing={1.25} onSubmit={onAddToCart}>
+                <Divider sx={{ mb: 2 }} />
+
+                <Stack
+                  component="form"
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.5}
+                  alignItems={{ sm: "center" }}
+                  onSubmit={onAddToCart}
+                >
                   <TextField
                     label="Quantity"
                     size="small"
@@ -146,9 +156,14 @@ export function BookDetailsPage() {
                     inputProps={{ min: 1, max: book.stock }}
                     value={quantity}
                     onChange={(event) => setQuantity(Math.max(1, Number(event.target.value)))}
-                    sx={{ width: { xs: "100%", sm: 130 } }}
+                    sx={{ width: { xs: "100%", sm: 140 } }}
                   />
-                  <Button type="submit" variant="contained" disabled={book.stock <= 0}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={book.stock <= 0}
+                    sx={{ width: { xs: "100%", sm: "auto" } }}
+                  >
                     Add to cart
                   </Button>
                 </Stack>

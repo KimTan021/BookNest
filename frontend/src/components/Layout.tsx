@@ -7,7 +7,7 @@ import Stack from "@mui/material/Stack";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import type { ReactNode } from "react";
-import { Link as RouterLink, useLocation } from "react-router-dom";
+import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../state/AuthContext";
 import { useThemeMode } from "../state/ThemeModeContext";
 
@@ -15,6 +15,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const { isAuthenticated, logout } = useAuth();
   const { mode, toggleMode } = useThemeMode();
   const location = useLocation();
+  const navigate = useNavigate();
 
   function isActive(path: string): boolean {
     if (path === "/") {
@@ -96,7 +97,10 @@ export function Layout({ children }: { children: ReactNode }) {
                   {navButton("/cart", "Cart")}
                   {navButton("/orders", "Orders")}
                   <Button
-                    onClick={logout}
+                    onClick={() => {
+                      logout();
+                      navigate("/", { replace: true });
+                    }}
                     color="inherit"
                     variant="outlined"
                     sx={(theme) => ({ textTransform: "none", borderColor: theme.palette.divider })}
