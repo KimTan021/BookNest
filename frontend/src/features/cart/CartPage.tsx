@@ -15,6 +15,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import PaidOutlinedIcon from "@mui/icons-material/PaidOutlined";
 import Paper from "@mui/material/Paper";
 import RemoveShoppingCartOutlinedIcon from "@mui/icons-material/RemoveShoppingCartOutlined";
+import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -33,8 +34,9 @@ export function CartPage() {
   const [cart, setCart] = useState<Cart | null>(null);
   const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState("");
-  const [statusSeverity, setStatusSeverity] = useState<"success" | "error" | "info">("info");
+  const [feedback, setFeedback] = useState<{ message: string; severity: "success" | "error" | "info" } | null>(
+    null
+  );
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
   const quantityUpdateTimers = useRef<Record<number, number>>({});
@@ -54,8 +56,7 @@ export function CartPage() {
       setQuantities(nextQuantities);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to load cart";
-      setStatus(message);
-      setStatusSeverity("error");
+      setFeedback({ message, severity: "error" });
     } finally {
       setLoading(false);
     }
@@ -107,14 +108,12 @@ export function CartPage() {
 
     try {
       await removeCartItem(token, bookId);
-      setStatus("Item removed.");
-      setStatusSeverity("success");
+      setFeedback({ message: "Item removed.", severity: "success" });
     } catch (error) {
       setCart(previousCart);
       setQuantities(previousQuantities);
       const message = error instanceof Error ? error.message : "Remove failed";
-      setStatus(message);
-      setStatusSeverity("error");
+      setFeedback({ message, severity: "error" });
     }
   }
 
@@ -128,7 +127,6 @@ export function CartPage() {
     const nextQuantity = Number.isNaN(parsed) ? 1 : Math.max(1, parsed);
 
     setQuantities((prev) => ({ ...prev, [bookId]: nextQuantity }));
-    setStatus("");
 
     const previousTimer = quantityUpdateTimers.current[bookId];
     if (previousTimer) {
@@ -140,8 +138,7 @@ export function CartPage() {
         await updateCartItem(authToken, bookId, nextQuantity);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Update failed";
-        setStatus(message);
-        setStatusSeverity("error");
+        setFeedback({ message, severity: "error" });
         await refresh();
       }
     }, 450);
@@ -190,11 +187,6 @@ export function CartPage() {
               <CircularProgress size={18} />
               <Typography variant="body2">Loading cart...</Typography>
             </Stack>
-          ) : null}
-          {status ? (
-            <Alert severity={statusSeverity} sx={{ mb: 2 }}>
-              {status}
-            </Alert>
           ) : null}
 
           <TableContainer component={Paper} variant="outlined">
@@ -261,7 +253,17 @@ export function CartPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={clearDialogOpen} onClose={() => setClearDialogOpen(false)}>
+      <Dialog
+        open={clearDialogOpen}
+        onClose={() => setClearDialogOpen(false)}
+        PaperProps={{
+          sx: (theme) => ({
+            backgroundColor: theme.palette.mode === "dark" ? "#1f2024" : "#ffffff",
+            backdropFilter: "none",
+            border: `1px solid ${theme.palette.divider}`
+          })
+        }}
+      >
         <DialogTitle>Clear cart</DialogTitle>
         <DialogContent>
           <DialogContentText>Remove all items from your cart?</DialogContentText>
@@ -275,13 +277,11 @@ export function CartPage() {
               setClearDialogOpen(false);
               try {
                 await clearCart(token);
-                setStatus("Cart cleared.");
-                setStatusSeverity("success");
+                setFeedback({ message: "Cart cleared.", severity: "success" });
                 await refresh();
               } catch (error) {
                 const message = error instanceof Error ? error.message : "Clear cart failed";
-                setStatus(message);
-                setStatusSeverity("error");
+                setFeedback({ message, severity: "error" });
               }
             }}
           >
@@ -290,7 +290,17 @@ export function CartPage() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={checkoutDialogOpen} onClose={() => setCheckoutDialogOpen(false)}>
+      <Dialog
+        open={checkoutDialogOpen}
+        onClose={() => setCheckoutDialogOpen(false)}
+        PaperProps={{
+          sx: (theme) => ({
+            backgroundColor: theme.palette.mode === "dark" ? "#1f2024" : "#ffffff",
+            backdropFilter: "none",
+            border: `1px solid ${theme.palette.divider}`
+          })
+        }}
+      >
         <DialogTitle>Checkout</DialogTitle>
         <DialogContent>
           <DialogContentText>Proceed to checkout with current cart items?</DialogContentText>
@@ -304,13 +314,11 @@ export function CartPage() {
               setCheckoutDialogOpen(false);
               try {
                 const order = await checkout(token);
-                setStatus(`Checkout completed. Order #${order.orderId}`);
-                setStatusSeverity("success");
+                setFeedback({ message: `Checkout completed. Order #${order.orderId}`, severity: "success" });
                 await refresh();
               } catch (error) {
                 const message = error instanceof Error ? error.message : "Checkout failed";
-                setStatus(message);
-                setStatusSeverity("error");
+                setFeedback({ message, severity: "error" });
               }
             }}
           >
@@ -318,6 +326,17 @@ export function CartPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={Boolean(feedback)}
+        autoHideDuration={2200}
+        onClose={() => setFeedback(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert onClose={() => setFeedback(null)} severity={feedback?.severity ?? "info"} variant="filled">
+          {feedback?.message ?? ""}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
