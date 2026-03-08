@@ -106,13 +106,12 @@ export function Layout({ children }: { children: ReactNode }) {
             <Typography
               component={RouterLink}
               to="/"
-              variant="h6"
+              variant="h5"
               sx={{
-                color: "inherit",
                 textDecoration: "none",
-                fontWeight: 700,
-                letterSpacing: "-0.012em",
-                fontSize: { xs: "1rem", md: "1.25rem" },
+                display: "inline-flex",
+                alignItems: "center",
+                gap: { xs: 0.6, md: 0.8 },
                 lineHeight: 1.15,
                 whiteSpace: { xs: "normal", md: "nowrap" },
                 overflowWrap: "anywhere",
@@ -121,7 +120,21 @@ export function Layout({ children }: { children: ReactNode }) {
                 pr: { xs: 1, md: 0 }
               }}
             >
-              Kim's Online Bookstore
+              <Box
+                component="img"
+                src="/branding/bookstore_logo.png"
+                alt="BookNest logo"
+                sx={{
+                  display: "block",
+                  width: { xs: 30, md: 36 },
+                  height: { xs: 30, md: 36 },
+                  objectFit: "contain",
+                  borderRadius: 1
+                }}
+              />
+              <Box component="span" sx={{ color: "#7a4b23" }}>
+                Book<Box component="span" sx={{ color: "#2e7d32" }}>Nest</Box>
+              </Box>
             </Typography>
 
             <Stack
