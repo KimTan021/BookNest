@@ -112,7 +112,7 @@ export function BooksPage() {
     }
     try {
       await addToCart(token, bookId, 1);
-      const message = `Added book #${bookId} to cart.`;
+      const message = "Item added to cart.";
       setActionNotice({ type: "success", message });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Add to cart failed";

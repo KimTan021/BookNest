@@ -11,6 +11,7 @@ import CardMedia from "@mui/material/CardMedia";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
+import Snackbar from "@mui/material/Snackbar";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
@@ -24,8 +25,9 @@ export function BookDetailsPage() {
   const { id } = useParams();
   const [book, setBook] = useState<Book | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [status, setStatus] = useState("");
-  const [statusSeverity, setStatusSeverity] = useState<"success" | "error" | "info">("info");
+  const [feedback, setFeedback] = useState<{ message: string; severity: "success" | "error" | "info" } | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const { token } = useAuth();
   const navigate = useNavigate();
@@ -33,14 +35,13 @@ export function BookDetailsPage() {
   useEffect(() => {
     const parsedId = Number(id);
     if (!parsedId || Number.isNaN(parsedId)) {
-      setStatus("Invalid book id in route.");
+      setFeedback({ message: "Invalid book id in route.", severity: "error" });
       return;
     }
 
     let cancelled = false;
     async function loadBook() {
       setLoading(true);
-      setStatus("");
       try {
         const response = await getBook(parsedId);
         if (!cancelled) {
@@ -49,7 +50,7 @@ export function BookDetailsPage() {
       } catch (error) {
         if (!cancelled) {
           const message = error instanceof Error ? error.message : "Failed to load book";
-          setStatus(message);
+          setFeedback({ message, severity: "error" });
         }
       } finally {
         if (!cancelled) {
@@ -70,19 +71,16 @@ export function BookDetailsPage() {
       return;
     }
     if (!token) {
-      setStatus("Login is required before adding items to cart.");
-      setStatusSeverity("error");
+      setFeedback({ message: "Login is required before adding items to cart.", severity: "error" });
       return;
     }
 
     try {
       await addToCart(token, book.id, quantity);
-      setStatus(`Added ${quantity} copy/copies of "${book.title}" to cart.`);
-      setStatusSeverity("success");
+      setFeedback({ message: "Item added to cart.", severity: "success" });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Add to cart failed";
-      setStatus(message);
-      setStatusSeverity("error");
+      setFeedback({ message, severity: "error" });
     }
   }
 
@@ -91,8 +89,7 @@ export function BookDetailsPage() {
       return;
     }
     if (!token) {
-      setStatus("Login is required before buying this book.");
-      setStatusSeverity("error");
+      setFeedback({ message: "Login is required before buying this book.", severity: "error" });
       return;
     }
 
@@ -101,8 +98,7 @@ export function BookDetailsPage() {
       navigate("/cart");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Buy now failed";
-      setStatus(message);
-      setStatusSeverity("error");
+      setFeedback({ message, severity: "error" });
     }
   }
 
@@ -209,11 +205,16 @@ export function BookDetailsPage() {
         </Card>
       ) : null}
 
-      {status ? (
-        <Alert severity={statusSeverity} sx={{ mt: 2 }}>
-          {status}
+      <Snackbar
+        open={Boolean(feedback)}
+        autoHideDuration={2200}
+        onClose={() => setFeedback(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert onClose={() => setFeedback(null)} severity={feedback?.severity ?? "info"} variant="filled">
+          {feedback?.message ?? ""}
         </Alert>
-      ) : null}
+      </Snackbar>
     </Box>
   );
 }
