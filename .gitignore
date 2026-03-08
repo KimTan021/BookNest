@@ -52,6 +52,8 @@ frontend/dist/
 # Vite build/dev cache
 frontend/.vite/
 frontend/.cache/
+# TypeScript incremental build info files
+frontend/*.tsbuildinfo
 
 ### Maven release/plugin artifacts ###
 release.properties
