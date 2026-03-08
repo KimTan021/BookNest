@@ -12,6 +12,7 @@ import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
+import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
 import BookOutlinedIcon from "@mui/icons-material/BookOutlined";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
@@ -28,12 +29,14 @@ import { useAuth } from "../state/AuthContext";
 import { useThemeMode } from "../state/ThemeModeContext";
 
 export function Layout({ children }: { children: ReactNode }) {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, userLabel } = useAuth();
   const { mode, toggleMode } = useThemeMode();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState<null | HTMLElement>(null);
   const mobileMenuOpen = Boolean(mobileMenuAnchor);
+  const [accountMenuAnchor, setAccountMenuAnchor] = useState<null | HTMLElement>(null);
+  const accountMenuOpen = Boolean(accountMenuAnchor);
 
   function isActive(path: string): boolean {
     if (path === "/") {
@@ -74,6 +77,10 @@ export function Layout({ children }: { children: ReactNode }) {
 
   function closeMobileMenu() {
     setMobileMenuAnchor(null);
+  }
+
+  function closeAccountMenu() {
+    setAccountMenuAnchor(null);
   }
 
   function mobileNavAction(path: string) {
@@ -156,16 +163,13 @@ export function Layout({ children }: { children: ReactNode }) {
                   {navButton("/cart", "Cart", <ShoppingCartOutlinedIcon />)}
                   {navButton("/orders", "Orders", <ReceiptLongOutlinedIcon />)}
                   <Button
-                    onClick={() => {
-                      logout();
-                      navigate("/", { replace: true });
-                    }}
-                    startIcon={<LogoutOutlinedIcon />}
+                    onClick={(event) => setAccountMenuAnchor(event.currentTarget)}
+                    startIcon={<AccountCircleOutlinedIcon />}
                     color="inherit"
                     variant="outlined"
                     sx={(theme) => ({ textTransform: "none", borderColor: theme.palette.divider })}
                   >
-                    Logout
+                    {userLabel ?? "Account"}
                   </Button>
                 </>
               ) : (
@@ -239,6 +243,20 @@ export function Layout({ children }: { children: ReactNode }) {
                   </MenuItem>
                 ]
               )}
+            </Menu>
+            <Menu anchorEl={accountMenuAnchor} open={accountMenuOpen} onClose={closeAccountMenu}>
+              <MenuItem
+                onClick={() => {
+                  logout();
+                  closeAccountMenu();
+                  navigate("/", { replace: true });
+                }}
+              >
+                <ListItemIcon>
+                  <LogoutOutlinedIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Logout</ListItemText>
+              </MenuItem>
             </Menu>
           </Toolbar>
         </Container>

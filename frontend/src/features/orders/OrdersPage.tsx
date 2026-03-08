@@ -107,7 +107,7 @@ export function OrdersPage() {
                 sx={{ mb: 1 }}
               >
                 <Typography variant="h6" component="h2">
-                  Order #{order.orderId}
+                  Order summary
                 </Typography>
                 <Chip label={order.status} color="primary" variant="outlined" />
               </Stack>

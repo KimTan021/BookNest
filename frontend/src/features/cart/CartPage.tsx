@@ -313,8 +313,8 @@ export function CartPage() {
             onClick={async () => {
               setCheckoutDialogOpen(false);
               try {
-                const order = await checkout(token);
-                setFeedback({ message: `Checkout completed. Order #${order.orderId}`, severity: "success" });
+                await checkout(token);
+                setFeedback({ message: "Checkout completed successfully.", severity: "success" });
                 await refresh();
               } catch (error) {
                 const message = error instanceof Error ? error.message : "Checkout failed";
