@@ -5,6 +5,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
+import LoginOutlinedIcon from "@mui/icons-material/LoginOutlined";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -70,7 +71,7 @@ export function LoginPage() {
               required
               fullWidth
             />
-            <Button type="submit" variant="contained" disabled={submitting}>
+            <Button type="submit" variant="contained" startIcon={<LoginOutlinedIcon />} disabled={submitting}>
               {submitting ? "Signing in..." : "Sign in"}
             </Button>
             {status ? <Alert severity="error">{status}</Alert> : null}

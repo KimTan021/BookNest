@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Alert from "@mui/material/Alert";
+import DeleteSweepOutlinedIcon from "@mui/icons-material/DeleteSweepOutlined";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -11,7 +12,9 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
+import PaidOutlinedIcon from "@mui/icons-material/PaidOutlined";
 import Paper from "@mui/material/Paper";
+import RemoveShoppingCartOutlinedIcon from "@mui/icons-material/RemoveShoppingCartOutlined";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -133,10 +136,16 @@ export function CartPage() {
             Quantities update instantly and sync in the background.
           </Typography>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mb: 2 }}>
-            <Button type="button" variant="outlined" color="error" onClick={() => setClearDialogOpen(true)}>
+            <Button
+              type="button"
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteSweepOutlinedIcon />}
+              onClick={() => setClearDialogOpen(true)}
+            >
               Clear cart
             </Button>
-            <Button type="button" variant="contained" onClick={() => setCheckoutDialogOpen(true)}>
+            <Button type="button" variant="contained" startIcon={<PaidOutlinedIcon />} onClick={() => setCheckoutDialogOpen(true)}>
               Checkout
             </Button>
           </Stack>
@@ -185,6 +194,7 @@ export function CartPage() {
                           type="button"
                           variant="outlined"
                           color="error"
+                          startIcon={<RemoveShoppingCartOutlinedIcon />}
                           onClick={async () => {
                             try {
                               await removeCartItem(token, item.bookId);
@@ -236,6 +246,7 @@ export function CartPage() {
           <Button onClick={() => setClearDialogOpen(false)}>Cancel</Button>
           <Button
             color="error"
+            startIcon={<DeleteSweepOutlinedIcon />}
             onClick={async () => {
               setClearDialogOpen(false);
               try {
@@ -264,6 +275,7 @@ export function CartPage() {
           <Button onClick={() => setCheckoutDialogOpen(false)}>Cancel</Button>
           <Button
             variant="contained"
+            startIcon={<PaidOutlinedIcon />}
             onClick={async () => {
               setCheckoutDialogOpen(false);
               try {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Alert from "@mui/material/Alert";
+import AddShoppingCartOutlinedIcon from "@mui/icons-material/AddShoppingCartOutlined";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -10,6 +11,8 @@ import CardMedia from "@mui/material/CardMedia";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
 import Pagination from "@mui/material/Pagination";
+import RefreshOutlinedIcon from "@mui/icons-material/RefreshOutlined";
+import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
 import Skeleton from "@mui/material/Skeleton";
 import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
@@ -172,6 +175,7 @@ export function BooksPage() {
               type="submit"
               variant="contained"
               size="small"
+              startIcon={<SearchOutlinedIcon />}
               sx={{ minWidth: 88, height: 40 }}
             >
               Apply
@@ -180,6 +184,7 @@ export function BooksPage() {
               type="button"
               variant="outlined"
               size="small"
+              startIcon={<RefreshOutlinedIcon />}
               sx={{ minWidth: 88, height: 40 }}
               onClick={() => {
                 setTitleInput("");
@@ -250,13 +255,19 @@ export function BooksPage() {
                     </Typography>
                   </CardContent>
                   <CardActions>
-                    <Button component={Link} to={`/books/${book.id}`} variant="outlined" size="small">
+                    <Button
+                      component={Link}
+                      to={`/books/${book.id}`}
+                      variant="outlined"
+                      size="small"
+                    >
                       View details
                     </Button>
                     <Button
                       type="button"
                       variant="contained"
                       size="small"
+                      startIcon={<AddShoppingCartOutlinedIcon />}
                       onClick={() => onQuickAdd(book.id)}
                       disabled={!isAuthenticated}
                     >

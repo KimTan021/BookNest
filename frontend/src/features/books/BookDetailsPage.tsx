@@ -1,6 +1,8 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Alert from "@mui/material/Alert";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import BoltOutlinedIcon from "@mui/icons-material/BoltOutlined";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -9,12 +11,14 @@ import CardMedia from "@mui/material/CardMedia";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
+import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { addToCart, getBook } from "../../lib/api";
 import { useAuth } from "../../state/AuthContext";
 import type { Book } from "../../types/api";
+import { useNavigate } from "react-router-dom";
 
 export function BookDetailsPage() {
   const { id } = useParams();
@@ -24,6 +28,7 @@ export function BookDetailsPage() {
   const [statusSeverity, setStatusSeverity] = useState<"success" | "error" | "info">("info");
   const [loading, setLoading] = useState(false);
   const { token } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const parsedId = Number(id);
@@ -81,9 +86,29 @@ export function BookDetailsPage() {
     }
   }
 
+  async function onBuyNow() {
+    if (!book) {
+      return;
+    }
+    if (!token) {
+      setStatus("Login is required before buying this book.");
+      setStatusSeverity("error");
+      return;
+    }
+
+    try {
+      await addToCart(token, book.id, quantity);
+      navigate("/cart");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Buy now failed";
+      setStatus(message);
+      setStatusSeverity("error");
+    }
+  }
+
   return (
     <Box component="section">
-      <Button component={Link} to="/" variant="text" sx={{ mb: 1 }}>
+      <Button component={Link} to="/" variant="text" startIcon={<ArrowBackRoundedIcon />} sx={{ mb: 1 }}>
         Back to catalog
       </Button>
 
@@ -161,10 +186,21 @@ export function BookDetailsPage() {
                   <Button
                     type="submit"
                     variant="contained"
+                    startIcon={<ShoppingCartOutlinedIcon />}
                     disabled={book.stock <= 0}
                     sx={{ width: { xs: "100%", sm: "auto" } }}
                   >
                     Add to cart
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    startIcon={<BoltOutlinedIcon />}
+                    disabled={book.stock <= 0}
+                    onClick={onBuyNow}
+                    sx={{ width: { xs: "100%", sm: "auto" } }}
+                  >
+                    Buy now
                   </Button>
                 </Stack>
               </Box>

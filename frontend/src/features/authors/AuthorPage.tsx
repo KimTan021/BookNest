@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Alert from "@mui/material/Alert";
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -11,6 +12,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import { getAuthor } from "../../lib/api";
 import type { AuthorDetails } from "../../types/api";
 
@@ -56,7 +58,7 @@ export function AuthorPage() {
 
   return (
     <Box component="section">
-      <Button component={Link} to="/" variant="text" sx={{ mb: 1 }}>
+      <Button component={Link} to="/" variant="text" startIcon={<ArrowBackRoundedIcon />} sx={{ mb: 1 }}>
         Back to catalog
       </Button>
 
@@ -110,7 +112,13 @@ export function AuthorPage() {
                     </Typography>
                   </CardContent>
                   <CardActions>
-                    <Button component={Link} to={`/books/${book.id}`} size="small" variant="outlined">
+                    <Button
+                      component={Link}
+                      to={`/books/${book.id}`}
+                      size="small"
+                      variant="outlined"
+                      startIcon={<VisibilityOutlinedIcon />}
+                    >
                       View book
                     </Button>
                   </CardActions>

@@ -5,6 +5,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
+import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -90,7 +91,7 @@ export function RegisterPage() {
               required
               fullWidth
             />
-            <Button type="submit" variant="contained" disabled={submitting}>
+            <Button type="submit" variant="contained" startIcon={<PersonAddAltOutlinedIcon />} disabled={submitting}>
               {submitting ? "Creating account..." : "Create account"}
             </Button>
             {status ? <Alert severity="error">{status}</Alert> : null}
