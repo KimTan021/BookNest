@@ -8,6 +8,7 @@ import Card from "@mui/material/Card";
 import CardActions from "@mui/material/CardActions";
 import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
+import CircularProgress from "@mui/material/CircularProgress";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
 import Pagination from "@mui/material/Pagination";
@@ -41,6 +42,8 @@ export function BooksPage() {
 
   const totalPages = booksPage?.totalPages ?? 1;
   const currentPage = booksPage ? booksPage.number + 1 : page + 1;
+  const bookItems = booksPage?.content ?? [];
+  const showInitialSkeleton = loading && bookItems.length === 0;
 
   const categoryParam = useMemo(() => {
     if (!categoryId) {
@@ -122,6 +125,7 @@ export function BooksPage() {
     setTitle(titleInput);
     setCategoryId(categoryValue);
     setPage(0);
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }
 
   return (
@@ -202,17 +206,13 @@ export function BooksPage() {
               {status}
             </Alert>
           ) : null}
-          {loading ? (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-              Loading books...
-            </Typography>
-          ) : null}
         </CardContent>
       </Card>
 
-      <Grid container spacing={2}>
-        {loading
-          ? Array.from({ length: 8 }).map((_, index) => (
+      <Box sx={{ position: "relative", minHeight: 320 }}>
+        <Grid container spacing={2}>
+          {showInitialSkeleton
+            ? Array.from({ length: 8 }).map((_, index) => (
               <Grid key={`skeleton-${index}`} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
                 <Card>
                   <Skeleton variant="rectangular" height={250} />
@@ -224,7 +224,7 @@ export function BooksPage() {
                 </Card>
               </Grid>
             ))
-          : (booksPage?.content ?? []).map((book) => (
+            : bookItems.map((book) => (
               <Grid key={book.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
                 <Card
                   sx={{
@@ -277,7 +277,26 @@ export function BooksPage() {
                 </Card>
               </Grid>
             ))}
-      </Grid>
+        </Grid>
+
+        {loading && !showInitialSkeleton ? (
+          <Box
+            sx={(theme) => ({
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 2,
+              backdropFilter: "blur(1px)",
+              backgroundColor:
+                theme.palette.mode === "dark" ? "rgba(0,0,0,0.22)" : "rgba(255,255,255,0.35)"
+            })}
+          >
+            <CircularProgress size={26} />
+          </Box>
+        ) : null}
+      </Box>
 
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
         <Typography variant="body2" color="text.secondary">
@@ -287,7 +306,10 @@ export function BooksPage() {
           count={Math.max(1, totalPages)}
           page={currentPage}
           color="primary"
-          onChange={(_, value) => setPage(value - 1)}
+          onChange={(_, value) => {
+            setPage(value - 1);
+            window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+          }}
         />
       </Stack>
 

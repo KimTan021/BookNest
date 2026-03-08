@@ -83,6 +83,41 @@ export function CartPage() {
     return cartItems.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
   }, [cartItems]);
 
+  async function onRemoveItem(bookId: number) {
+    if (!token || !cart) {
+      return;
+    }
+
+    const previousCart = cart;
+    const previousQuantities = quantities;
+
+    setCart((current) =>
+      current
+        ? {
+            ...current,
+            items: current.items.filter((item) => item.bookId !== bookId)
+          }
+        : current
+    );
+    setQuantities((current) => {
+      const next = { ...current };
+      delete next[bookId];
+      return next;
+    });
+
+    try {
+      await removeCartItem(token, bookId);
+      setStatus("Item removed.");
+      setStatusSeverity("success");
+    } catch (error) {
+      setCart(previousCart);
+      setQuantities(previousQuantities);
+      const message = error instanceof Error ? error.message : "Remove failed";
+      setStatus(message);
+      setStatusSeverity("error");
+    }
+  }
+
   function onQuantityInputChange(bookId: number, rawValue: string) {
     const authToken = token;
     if (!authToken) {
@@ -195,18 +230,7 @@ export function CartPage() {
                           variant="outlined"
                           color="error"
                           startIcon={<RemoveShoppingCartOutlinedIcon />}
-                          onClick={async () => {
-                            try {
-                              await removeCartItem(token, item.bookId);
-                              setStatus("Item removed.");
-                              setStatusSeverity("success");
-                              await refresh();
-                            } catch (error) {
-                              const message = error instanceof Error ? error.message : "Remove failed";
-                              setStatus(message);
-                              setStatusSeverity("error");
-                            }
-                          }}
+                          onClick={() => onRemoveItem(item.bookId)}
                         >
                           Remove
                         </Button>
