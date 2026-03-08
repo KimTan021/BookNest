@@ -1,6 +1,5 @@
 HELP.md
 target/
-.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
@@ -50,6 +49,9 @@ logs/
 ### Frontend ###
 frontend/node_modules/
 frontend/dist/
+# Vite build/dev cache
+frontend/.vite/
+frontend/.cache/
 
 ### Maven release/plugin artifacts ###
 release.properties
