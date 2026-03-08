@@ -5,10 +5,9 @@ import com.kimtan.onlinebookstore.entity.Book;
 import com.kimtan.onlinebookstore.entity.Category;
 import com.kimtan.onlinebookstore.repository.AuthorRepository;
 import com.kimtan.onlinebookstore.repository.BookRepository;
-import com.kimtan.onlinebookstore.repository.CartItemRepository;
 import com.kimtan.onlinebookstore.repository.CategoryRepository;
-import com.kimtan.onlinebookstore.repository.OrderItemRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -21,6 +20,7 @@ import java.sql.Connection;
 import java.util.List;
 
 @Configuration
+@ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
 
@@ -29,17 +29,18 @@ public class DataSeeder implements CommandLineRunner {
     private final AuthorRepository authorRepository;
     private final CategoryRepository categoryRepository;
     private final BookRepository bookRepository;
-    private final CartItemRepository cartItemRepository;
-    private final OrderItemRepository orderItemRepository;
     private final JdbcTemplate jdbcTemplate;
 
     @Override
     @Transactional
     public void run(String... args) {
-        log.info("Resetting and seeding catalog data");
         repairBookForeignKeyIfNeeded("cart_items", "fk_cart_items_books");
         repairBookForeignKeyIfNeeded("order_items", "fk_order_items_books");
-        resetCatalogData();
+        if (bookRepository.count() > 0) {
+            log.info("Skipping catalog seed because books already exist");
+            return;
+        }
+        log.info("Seeding initial catalog data");
         seedCatalogData();
     }
 
@@ -79,27 +80,6 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 
-    private void resetCatalogData() {
-        if (isMySql()) {
-            // TRUNCATE resets auto-increment counters in MySQL.
-            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
-            truncateIfExists("order_items");
-            truncateIfExists("cart_items");
-            truncateIfExists("books");
-            truncateIfExists("authors");
-            truncateIfExists("categories");
-            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
-            return;
-        }
-
-        // Fallback for non-MySQL environments (e.g. tests).
-        orderItemRepository.deleteAllInBatch();
-        cartItemRepository.deleteAllInBatch();
-        bookRepository.deleteAllInBatch();
-        authorRepository.deleteAllInBatch();
-        categoryRepository.deleteAllInBatch();
-    }
-
     private boolean isMySql() {
         if (jdbcTemplate.getDataSource() == null) {
             return false;
@@ -109,14 +89,6 @@ public class DataSeeder implements CommandLineRunner {
         } catch (Exception ex) {
             log.warn("Unable to detect database product, using non-MySQL reset fallback", ex);
             return false;
-        }
-    }
-
-    private void truncateIfExists(String table) {
-        try {
-            jdbcTemplate.execute("TRUNCATE TABLE " + table);
-        } catch (RuntimeException ex) {
-            log.debug("Skipping truncate for table '{}': {}", table, ex.getMessage());
         }
     }
 
