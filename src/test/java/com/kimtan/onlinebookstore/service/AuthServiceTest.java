@@ -1,5 +1,6 @@
 package com.kimtan.onlinebookstore.service;
 
+import com.kimtan.onlinebookstore.dto.auth.AuthResponse;
 import com.kimtan.onlinebookstore.entity.Cart;
 import com.kimtan.onlinebookstore.entity.User;
 import com.kimtan.onlinebookstore.exception.ConflictException;
@@ -13,16 +14,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -46,58 +44,81 @@ class AuthServiceTest {
     private AuthService authService;
 
     @Test
-    void registerThrowsWhenEmailAlreadyExists() {
-        when(userRepository.existsByEmail("taken@test.com")).thenReturn(true);
-
-        assertThrows(ConflictException.class, () ->
-                authService.register("Kim", "Tan", "taken@test.com", "secret123"));
-    }
-
-    @Test
-    void registerSavesUserAndCart() {
-        when(userRepository.existsByEmail("new@test.com")).thenReturn(false);
-        when(passwordEncoder.encode("secret123")).thenReturn("ENC(secret123)");
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(jwtUtil.generateToken(any(User.class))).thenReturn("token-123");
+    void registerShouldSaveUserCartAndReturnJwtResponse() {
+        when(userRepository.existsByEmail("kim@example.com")).thenReturn(false);
+        when(passwordEncoder.encode("secret123")).thenReturn("encoded-secret");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            user.setId(10L);
+            return user;
+        });
+        when(jwtUtil.generateToken(any(User.class))).thenReturn("jwt-token");
         when(jwtUtil.getExpirationInSeconds()).thenReturn(3600L);
 
-        var response = authService.register("Kim", "Tan", "new@test.com", "secret123");
+        AuthResponse response = authService.register("Kim", "Tan", "kim@example.com", "secret123");
+
+        assertEquals("jwt-token", response.accessToken());
+        assertEquals("Bearer", response.tokenType());
+        assertEquals(3600L, response.expiresInSeconds());
 
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(userCaptor.capture());
         User savedUser = userCaptor.getValue();
         assertEquals("Kim", savedUser.getFirstName());
         assertEquals("Tan", savedUser.getLastName());
-        assertEquals("new@test.com", savedUser.getEmail());
-        assertEquals("ENC(secret123)", savedUser.getPassword());
+        assertEquals("kim@example.com", savedUser.getEmail());
+        assertEquals("encoded-secret", savedUser.getPassword());
         assertEquals("ROLE_USER", savedUser.getRole());
 
         ArgumentCaptor<Cart> cartCaptor = ArgumentCaptor.forClass(Cart.class);
         verify(cartRepository).save(cartCaptor.capture());
-        assertEquals(savedUser, cartCaptor.getValue().getUser());
-        assertNotNull(response);
-        assertEquals("token-123", response.accessToken());
+        assertEquals(10L, cartCaptor.getValue().getUser().getId());
     }
 
     @Test
-    void loginDelegatesToAuthenticationManagerAndReturnsToken() {
-        User principal = User.builder()
-                .email("user@test.com")
-                .password("pw")
+    void registerShouldRejectDuplicateEmail() {
+        when(userRepository.existsByEmail("kim@example.com")).thenReturn(true);
+
+        ConflictException exception = assertThrows(
+                ConflictException.class,
+                () -> authService.register("Kim", "Tan", "kim@example.com", "secret123")
+        );
+
+        assertEquals("Email already exists", exception.getMessage());
+        verify(userRepository, never()).save(any(User.class));
+        verify(cartRepository, never()).save(any(Cart.class));
+    }
+
+    @Test
+    void loginShouldAuthenticateAndReturnJwtResponse() {
+        User user = User.builder()
+                .id(5L)
+                .email("kim@example.com")
+                .password("encoded-secret")
                 .role("ROLE_USER")
                 .build();
-        Authentication authentication = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
-        when(authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken("user@test.com", "secret123")
-        )).thenReturn(authentication);
-        when(jwtUtil.generateToken(principal)).thenReturn("token-123");
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenReturn(authentication);
+        when(jwtUtil.generateToken(user)).thenReturn("jwt-token");
         when(jwtUtil.getExpirationInSeconds()).thenReturn(3600L);
 
-        var response = authService.login("user@test.com", "secret123");
+        AuthResponse response = authService.login("kim@example.com", "secret123");
 
-        verify(authenticationManager).authenticate(
-                new UsernamePasswordAuthenticationToken("user@test.com", "secret123")
-        );
-        assertEquals("token-123", response.accessToken());
+        assertEquals("jwt-token", response.accessToken());
+        assertEquals("Bearer", response.tokenType());
+        assertEquals(3600L, response.expiresInSeconds());
+        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
+    }
+
+    @Test
+    void loginShouldPropagateAuthenticationFailure() {
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new BadCredentialsException("Bad credentials"));
+
+        assertThrows(BadCredentialsException.class, () -> authService.login("kim@example.com", "wrong-password"));
+        verify(jwtUtil, never()).generateToken(any(User.class));
     }
 }
