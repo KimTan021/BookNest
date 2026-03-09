@@ -61,6 +61,7 @@ public class AuthService {
         );
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        assert userDetails != null;
         String token = jwtUtil.generateToken(userDetails);
         return new AuthResponse(token, "Bearer", jwtUtil.getExpirationInSeconds());
     }

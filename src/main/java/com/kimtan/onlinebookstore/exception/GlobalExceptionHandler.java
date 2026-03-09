@@ -5,15 +5,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
@@ -35,12 +36,24 @@ public class GlobalExceptionHandler {
                 methodArgumentNotValidException.getBindingResult().getFieldError() != null) {
             message = methodArgumentNotValidException.getBindingResult().getFieldError().getDefaultMessage();
         }
+        if (ex instanceof ConstraintViolationException constraintViolationException &&
+                !constraintViolationException.getConstraintViolations().isEmpty()) {
+            message = constraintViolationException.getConstraintViolations()
+                    .iterator()
+                    .next()
+                    .getMessage();
+        }
         return buildErrorResponse(message, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler({UnauthorizedException.class, BadCredentialsException.class})
     public ResponseEntity<ApiError> handleUnauthorized(Exception ex) {
         return buildErrorResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleForbidden(AccessDeniedException ex) {
+        return buildErrorResponse("Access denied", HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

@@ -7,6 +7,7 @@ import com.kimtan.onlinebookstore.repository.AuthorRepository;
 import com.kimtan.onlinebookstore.repository.BookRepository;
 import com.kimtan.onlinebookstore.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
@@ -33,7 +34,7 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     @Transactional
-    public void run(String... args) {
+    public void run(String @NonNull ... args) {
         repairBookForeignKeyIfNeeded("cart_items", "fk_cart_items_books");
         repairBookForeignKeyIfNeeded("order_items", "fk_order_items_books");
         if (bookRepository.count() > 0) {
