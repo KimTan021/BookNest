@@ -44,6 +44,6 @@ class CustomUserDetailsServiceTest {
                 () -> customUserDetailsService.loadUserByUsername("missing@example.com")
         );
 
-        assertEquals("User not found", exception.getMessage());
+        assertEquals("User not found with email: missing@example.com", exception.getMessage());
     }
 }
