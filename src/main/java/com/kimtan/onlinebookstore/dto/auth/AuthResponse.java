@@ -1,11 +1,12 @@
 package com.kimtan.onlinebookstore.dto.auth;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public record AuthResponse(
-        @io.swagger.v3.oas.annotations.media.Schema(description = "JWT access token", example = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJyZWFkZXJAZXhhbXBsZS5jb20ifQ.signature")
+        @Schema(description = "JWT access token", example = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJyZWFkZXJAZXhhbXBsZS5jb20ifQ.signature")
         String accessToken,
-        @io.swagger.v3.oas.annotations.media.Schema(description = "Authorization scheme", example = "Bearer")
+        @Schema(description = "Authorization scheme", example = "Bearer")
         String tokenType,
-        @io.swagger.v3.oas.annotations.media.Schema(description = "Token lifetime in seconds", example = "3600")
+        @Schema(description = "Token lifetime in seconds", example = "3600")
         long expiresInSeconds
 ) {
 }
