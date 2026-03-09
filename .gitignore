@@ -40,6 +40,12 @@ Desktop.ini
 ### Logs ###
 *.log
 logs/
+*.pid
+*.pid.lock
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 ### Local env / secrets ###
 .env
@@ -49,9 +55,13 @@ logs/
 ### Frontend ###
 frontend/node_modules/
 frontend/dist/
+frontend/coverage/
 # Vite build/dev cache
 frontend/.vite/
 frontend/.cache/
+frontend/.eslintcache
+frontend/.env
+frontend/.env.*
 # TypeScript incremental build info files
 frontend/*.tsbuildinfo
 
