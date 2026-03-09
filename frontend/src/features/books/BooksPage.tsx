@@ -24,6 +24,7 @@ import { useAuth } from "../../state/AuthContext";
 import type { Book, Category, PageResponse } from "../../types/api";
 
 const DEFAULT_PAGE_SIZE = 8;
+const TITLE_SEARCH_DEBOUNCE_MS = 250;
 
 export function BooksPage() {
   const [titleInput, setTitleInput] = useState("");
@@ -74,6 +75,22 @@ export function BooksPage() {
   }, []);
 
   useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setTitle((currentTitle) => {
+        if (currentTitle === titleInput) {
+          return currentTitle;
+        }
+        setPage(0);
+        return titleInput;
+      });
+    }, TITLE_SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [titleInput]);
+
+  useEffect(() => {
     let cancelled = false;
     async function loadBooks() {
       setLoading(true);
@@ -120,9 +137,10 @@ export function BooksPage() {
     }
   }
 
-  function applyFilters(nextCategoryIdInput?: string) {
+  function applyFilters(nextCategoryIdInput?: string, nextTitleInput?: string) {
     const categoryValue = nextCategoryIdInput ?? categoryIdInput;
-    setTitle(titleInput);
+    const titleValue = nextTitleInput ?? titleInput;
+    setTitle(titleValue);
     setCategoryId(categoryValue);
     setPage(0);
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -152,6 +170,12 @@ export function BooksPage() {
               label="Title search"
               value={titleInput}
               onChange={(event) => setTitleInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  applyFilters(undefined, titleInput);
+                }
+              }}
               placeholder="clean code"
               size="small"
               fullWidth
