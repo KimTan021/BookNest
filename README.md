@@ -148,17 +148,17 @@ The backend reads these values from `src/main/resources/application.properties`:
 
 ```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/onlinebookstoreDB
-spring.datasource.username=${DB_USERNAME:root}
-spring.datasource.password=${DB_PASSWORD:admin}
+spring.datasource.username=${DB_USERNAME}
+spring.datasource.password=${DB_PASSWORD}
 server.port=8082
 
-app.jwt.secret=${JWT_SECRET:onlinebookstorejwtsecretkeymustbeatleast32byteslong123456}
+app.jwt.secret=${JWT_SECRET}
 app.jwt.expiration-ms=${JWT_EXPIRATION_MS:3600000}
 app.cors.allowed-origin-patterns=${CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*}
 app.seed.enabled=false
 ```
 
-Recommended local environment variables:
+Required local environment variables:
 
 ```powershell
 $env:DB_USERNAME="root"
@@ -166,7 +166,25 @@ $env:DB_PASSWORD="your_mysql_password"
 $env:JWT_SECRET="your-very-long-jwt-secret-at-least-32-bytes"
 ```
 
-If you prefer, you can also edit `application.properties` directly for local-only development.
+The application will fail to start if any of these are missing.
+
+### .env Alternative (Recommended)
+
+The backend will also load a local `.env` file at the project root. This file is ignored by Git and keeps secrets out of source control.
+
+1. Copy the example file:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+2. Fill in values inside `.env`:
+
+```properties
+DB_USERNAME=root
+DB_PASSWORD=your_mysql_password
+JWT_SECRET=your-very-long-jwt-secret-at-least-32-bytes
+```
 
 ## Local Setup
 
