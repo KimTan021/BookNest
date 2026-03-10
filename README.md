@@ -327,16 +327,6 @@ GitHub Actions also runs backend tests on pushes and pull requests to `main`.
 - Frontend: `5173`
 - MySQL: `3306`
 
-## Notes for GitHub
-
-Before pushing publicly, you may want to:
-
-- replace default database credentials with your own local environment variables
-- replace the fallback JWT secret with a private secret in your environment
-- add screenshots or a demo GIF to this README
-- add a live deployment link if you deploy the frontend and backend
-- add your name, course, or project context if this is a school capstone
-
 ## Future Improvements
 
 - Admin dashboard for inventory management
