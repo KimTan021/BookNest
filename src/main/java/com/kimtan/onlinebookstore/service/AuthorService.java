@@ -2,6 +2,7 @@ package com.kimtan.onlinebookstore.service;
 
 import com.kimtan.onlinebookstore.dto.AuthorBookResponseDTO;
 import com.kimtan.onlinebookstore.dto.AuthorDetailsResponseDTO;
+import com.kimtan.onlinebookstore.dto.AuthorSummaryResponseDTO;
 import com.kimtan.onlinebookstore.entity.Author;
 import com.kimtan.onlinebookstore.exception.ResourceNotFoundException;
 import com.kimtan.onlinebookstore.repository.AuthorRepository;
@@ -17,6 +18,14 @@ public class AuthorService {
 
     private final AuthorRepository authorRepository;
     private final BookRepository bookRepository;
+
+    public List<AuthorSummaryResponseDTO> getAllAuthors() {
+        return authorRepository.findAll()
+                .stream()
+                .sorted((left, right) -> left.getName().compareToIgnoreCase(right.getName()))
+                .map(author -> new AuthorSummaryResponseDTO(author.getId(), author.getName()))
+                .toList();
+    }
 
     public AuthorDetailsResponseDTO getAuthorById(Long authorId) {
         Author author = authorRepository.findById(authorId)

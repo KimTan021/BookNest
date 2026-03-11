@@ -22,6 +22,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import PersonAddAltOutlinedIcon from "@mui/icons-material/PersonAddAltOutlined";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
+import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
 import type { MouseEvent, ReactNode } from "react";
 import { useState } from "react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
@@ -29,7 +30,7 @@ import { useAuth } from "../state/AuthContext";
 import { useThemeMode } from "../state/ThemeModeContext";
 
 export function Layout({ children }: { children: ReactNode }) {
-  const { isAuthenticated, logout, userLabel } = useAuth();
+  const { isAuthenticated, logout, userLabel, isAdmin } = useAuth();
   const { mode, toggleMode } = useThemeMode();
   const location = useLocation();
   const navigate = useNavigate();
@@ -173,8 +174,13 @@ export function Layout({ children }: { children: ReactNode }) {
               {navButton("/", "Books", <BookOutlinedIcon />)}
               {isAuthenticated ? (
                 <>
-                  {navButton("/cart", "Cart", <ShoppingCartOutlinedIcon />)}
-                  {navButton("/orders", "Orders", <ReceiptLongOutlinedIcon />)}
+                  {isAdmin ? navButton("/admin", "Admin", <AdminPanelSettingsOutlinedIcon />) : null}
+                  {!isAdmin ? (
+                    <>
+                      {navButton("/cart", "Cart", <ShoppingCartOutlinedIcon />)}
+                      {navButton("/orders", "Orders", <ReceiptLongOutlinedIcon />)}
+                    </>
+                  ) : null}
                   <Button
                     onClick={(event) => setAccountMenuAnchor(event.currentTarget)}
                     startIcon={<AccountCircleOutlinedIcon />}
@@ -210,18 +216,32 @@ export function Layout({ children }: { children: ReactNode }) {
               </MenuItem>
               {isAuthenticated ? (
                 [
-                  <MenuItem key="cart" selected={isActive("/cart")} onClick={() => mobileNavAction("/cart")}>
-                    <ListItemIcon>
-                      <ShoppingCartOutlinedIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>Cart</ListItemText>
-                  </MenuItem>,
-                  <MenuItem key="orders" selected={isActive("/orders")} onClick={() => mobileNavAction("/orders")}>
-                    <ListItemIcon>
-                      <ReceiptLongOutlinedIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>Orders</ListItemText>
-                  </MenuItem>,
+                  ...(isAdmin
+                    ? [
+                        <MenuItem key="admin" selected={isActive("/admin")} onClick={() => mobileNavAction("/admin")}>
+                          <ListItemIcon>
+                            <AdminPanelSettingsOutlinedIcon fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText>Admin</ListItemText>
+                        </MenuItem>
+                      ]
+                    : []),
+                  ...(!isAdmin
+                    ? [
+                        <MenuItem key="cart" selected={isActive("/cart")} onClick={() => mobileNavAction("/cart")}>
+                          <ListItemIcon>
+                            <ShoppingCartOutlinedIcon fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText>Cart</ListItemText>
+                        </MenuItem>,
+                        <MenuItem key="orders" selected={isActive("/orders")} onClick={() => mobileNavAction("/orders")}>
+                          <ListItemIcon>
+                            <ReceiptLongOutlinedIcon fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText>Orders</ListItemText>
+                        </MenuItem>
+                      ]
+                    : []),
                   <MenuItem
                     key="logout"
                     onClick={() => {

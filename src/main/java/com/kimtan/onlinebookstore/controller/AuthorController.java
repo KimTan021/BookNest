@@ -1,9 +1,11 @@
 package com.kimtan.onlinebookstore.controller;
 
 import com.kimtan.onlinebookstore.dto.AuthorDetailsResponseDTO;
+import com.kimtan.onlinebookstore.dto.AuthorSummaryResponseDTO;
 import com.kimtan.onlinebookstore.exception.ApiError;
 import com.kimtan.onlinebookstore.service.AuthorService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -21,6 +23,22 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthorController {
 
     private final AuthorService authorService;
+
+    @GetMapping
+    @Operation(
+            summary = "List authors",
+            description = "Returns all authors ordered by name.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Authors returned successfully",
+                            content = @Content(array = @ArraySchema(schema = @Schema(implementation = AuthorSummaryResponseDTO.class)))
+                    )
+            }
+    )
+    public java.util.List<AuthorSummaryResponseDTO> getAllAuthors() {
+        return authorService.getAllAuthors();
+    }
 
     @GetMapping("/{id}")
     @Operation(

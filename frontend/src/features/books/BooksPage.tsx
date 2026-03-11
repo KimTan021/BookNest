@@ -39,7 +39,7 @@ export function BooksPage() {
   const [actionNotice, setActionNotice] = useState<{ type: "success" | "error"; message: string } | null>(
     null
   );
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated, token, isAdmin } = useAuth();
 
   const totalPages = booksPage?.totalPages ?? 1;
   const currentPage = booksPage ? booksPage.number + 1 : page + 1;
@@ -123,6 +123,10 @@ export function BooksPage() {
   }, [page, title, categoryParam]);
 
   async function onQuickAdd(bookId: number) {
+    if (isAdmin) {
+      setActionNotice({ type: "error", message: "Admin accounts cannot use the cart." });
+      return;
+    }
     if (!token) {
       setActionNotice({ type: "error", message: "Login is required to add items to cart." });
       return;
@@ -293,9 +297,9 @@ export function BooksPage() {
                       size="small"
                       startIcon={<AddShoppingCartOutlinedIcon />}
                       onClick={() => onQuickAdd(book.id)}
-                      disabled={!isAuthenticated}
+                      disabled={!isAuthenticated || isAdmin}
                     >
-                      Add to cart
+                      {isAdmin ? "Admin view" : "Add to cart"}
                     </Button>
                   </CardActions>
                 </Card>

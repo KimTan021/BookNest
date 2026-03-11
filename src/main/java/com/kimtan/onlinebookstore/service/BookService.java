@@ -60,7 +60,7 @@ public class BookService {
         return mapToDTO(book);
     }
 
-    private BookResponseDTO mapToDTO(Book book) {
+    BookResponseDTO mapToDTO(Book book) {
         String authorName = book.getAuthor() != null ? book.getAuthor().getName() : "Unknown Author";
         String categoryName = book.getCategory() != null ? book.getCategory().getName() : "Uncategorized";
         Long authorId = book.getAuthor() != null ? book.getAuthor().getId() : null;

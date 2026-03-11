@@ -6,13 +6,15 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   userLabel: string | null;
+  role: string | null;
+  isAdmin: boolean;
   setAuthToken: (token: string, expiresInSeconds: number) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
-function parseUserLabel(token: string | null): string | null {
+function parsePayload(token: string | null): { email?: string; sub?: string; role?: string } | null {
   if (!token) {
     return null;
   }
@@ -26,8 +28,7 @@ function parseUserLabel(token: string | null): string | null {
     const normalized = payloadBase64.replace(/-/g, "+").replace(/_/g, "/");
     const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
     const payloadJson = atob(padded);
-    const payload = JSON.parse(payloadJson) as { email?: string; sub?: string };
-    return payload.email ?? payload.sub ?? null;
+    return JSON.parse(payloadJson) as { email?: string; sub?: string; role?: string };
   } catch {
     return null;
   }
@@ -37,19 +38,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => getToken());
 
   const value = useMemo<AuthState>(
-    () => ({
-      token,
-      isAuthenticated: Boolean(token),
-      userLabel: parseUserLabel(token),
-      setAuthToken: (nextToken, expiresInSeconds) => {
-        saveToken(nextToken, expiresInSeconds);
-        setToken(nextToken);
-      },
-      logout: () => {
-        clearToken();
-        setToken(null);
-      }
-    }),
+    () => {
+      const payload = parsePayload(token);
+      const role = payload?.role ?? null;
+      return {
+        token,
+        isAuthenticated: Boolean(token),
+        userLabel: payload?.email ?? payload?.sub ?? null,
+        role,
+        isAdmin: role === "ROLE_ADMIN",
+        setAuthToken: (nextToken, expiresInSeconds) => {
+          saveToken(nextToken, expiresInSeconds);
+          setToken(nextToken);
+        },
+        logout: () => {
+          clearToken();
+          setToken(null);
+        }
+      };
+    },
     [token]
   );
 

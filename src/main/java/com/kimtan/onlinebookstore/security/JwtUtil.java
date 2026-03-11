@@ -27,8 +27,14 @@ public class JwtUtil {
 
     public String generateToken(UserDetails userDetails) {
         Instant now = Instant.now();
+        String role = userDetails.getAuthorities().stream()
+                .findFirst()
+                .map(org.springframework.security.core.GrantedAuthority::getAuthority)
+                .orElse("ROLE_USER");
         return Jwts.builder()
                 .subject(userDetails.getUsername())
+                .claim("email", userDetails.getUsername())
+                .claim("role", role)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusMillis(expirationMs)))
                 .signWith(Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8)), Jwts.SIG.HS256)

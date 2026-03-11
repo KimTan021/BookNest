@@ -1,6 +1,16 @@
 import type {
   ApiErrorResponse,
+  AdminAuthor,
+  AdminAuthorRequest,
+  AdminBookDetail,
+  AdminBookUpdateRequest,
+  AdminCategoryRequest,
+  AdminCreateBookRequest,
+  AdminCreateUserRequest,
+  AdminMetrics,
+  AdminUser,
   AuthResponse,
+  AuthorSummary,
   AuthorDetails,
   Book,
   Category,
@@ -78,6 +88,10 @@ export async function register(input: RegisterRequest): Promise<AuthResponse> {
   });
 }
 
+export async function listAuthors(): Promise<AuthorSummary[]> {
+  return request<AuthorSummary[]>("/api/authors");
+}
+
 export async function listBooks(params: {
   page: number;
   size: number;
@@ -99,6 +113,112 @@ export async function getBook(bookId: number): Promise<Book> {
 
 export async function getAuthor(authorId: number): Promise<AuthorDetails> {
   return request<AuthorDetails>(`/api/authors/${authorId}`);
+}
+
+export async function getAdminMetrics(token: string): Promise<AdminMetrics> {
+  return request<AdminMetrics>("/api/admin/metrics", {}, token);
+}
+
+export async function adminCreateUser(
+  token: string,
+  input: AdminCreateUserRequest
+): Promise<AdminUser> {
+  return request<AdminUser>("/api/admin/users", {
+    method: "POST",
+    body: JSON.stringify(input)
+  }, token);
+}
+
+export async function adminCreateBook(
+  token: string,
+  input: AdminCreateBookRequest
+): Promise<Book> {
+  return request<Book>("/api/admin/books", {
+    method: "POST",
+    body: JSON.stringify(input)
+  }, token);
+}
+
+export async function adminListUsers(token: string, query?: string): Promise<AdminUser[]> {
+  const queryString = query ? `?query=${encodeURIComponent(query)}` : "";
+  return request<AdminUser[]>(`/api/admin/users${queryString}`, {}, token);
+}
+
+export async function adminGetBook(token: string, bookId: number): Promise<AdminBookDetail> {
+  return request<AdminBookDetail>(`/api/admin/books/${bookId}`, {}, token);
+}
+
+export async function adminUpdateBook(
+  token: string,
+  bookId: number,
+  input: AdminBookUpdateRequest
+): Promise<Book> {
+  return request<Book>(`/api/admin/books/${bookId}`, {
+    method: "PUT",
+    body: JSON.stringify(input)
+  }, token);
+}
+
+export async function adminDeleteBook(token: string, bookId: number): Promise<void> {
+  await request<void>(`/api/admin/books/${bookId}`, { method: "DELETE" }, token);
+}
+
+export async function adminListAuthors(token: string): Promise<AdminAuthor[]> {
+  return request<AdminAuthor[]>("/api/admin/authors", {}, token);
+}
+
+export async function adminCreateAuthor(
+  token: string,
+  input: AdminAuthorRequest
+): Promise<AdminAuthor> {
+  return request<AdminAuthor>("/api/admin/authors", {
+    method: "POST",
+    body: JSON.stringify(input)
+  }, token);
+}
+
+export async function adminUpdateAuthor(
+  token: string,
+  authorId: number,
+  input: AdminAuthorRequest
+): Promise<AdminAuthor> {
+  return request<AdminAuthor>(`/api/admin/authors/${authorId}`, {
+    method: "PUT",
+    body: JSON.stringify(input)
+  }, token);
+}
+
+export async function adminDeleteAuthor(token: string, authorId: number): Promise<void> {
+  await request<void>(`/api/admin/authors/${authorId}`, { method: "DELETE" }, token);
+}
+
+export async function adminListCategories(token: string): Promise<Category[]> {
+  return request<Category[]>("/api/admin/categories", {}, token);
+}
+
+export async function adminCreateCategory(
+  token: string,
+  input: AdminCategoryRequest
+): Promise<Category> {
+  return request<Category>("/api/admin/categories", {
+    method: "POST",
+    body: JSON.stringify(input)
+  }, token);
+}
+
+export async function adminUpdateCategory(
+  token: string,
+  categoryId: number,
+  input: AdminCategoryRequest
+): Promise<Category> {
+  return request<Category>(`/api/admin/categories/${categoryId}`, {
+    method: "PUT",
+    body: JSON.stringify(input)
+  }, token);
+}
+
+export async function adminDeleteCategory(token: string, categoryId: number): Promise<void> {
+  await request<void>(`/api/admin/categories/${categoryId}`, { method: "DELETE" }, token);
 }
 
 export async function getCart(token: string): Promise<Cart> {

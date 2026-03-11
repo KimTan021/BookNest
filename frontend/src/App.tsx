@@ -1,12 +1,14 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
-import { RequireAuth } from "./components/RequireAuth";
+import { RequireAdmin } from "./components/RequireAdmin";
+import { RequireCustomer } from "./components/RequireCustomer";
 import { LoginPage } from "./features/auth/LoginPage";
 import { RegisterPage } from "./features/auth/RegisterPage";
 import { AuthorPage } from "./features/authors/AuthorPage";
 import { BookDetailsPage } from "./features/books/BookDetailsPage";
 import { BooksPage } from "./features/books/BooksPage";
 import { CartPage } from "./features/cart/CartPage";
+import { AdminDashboardPage } from "./features/admin/AdminDashboardPage";
 import { OrdersPage } from "./features/orders/OrdersPage";
 
 export default function App() {
@@ -21,17 +23,25 @@ export default function App() {
         <Route
           path="/cart"
           element={
-            <RequireAuth>
+            <RequireCustomer>
               <CartPage />
-            </RequireAuth>
+            </RequireCustomer>
           }
         />
         <Route
           path="/orders"
           element={
-            <RequireAuth>
+            <RequireCustomer>
               <OrdersPage />
-            </RequireAuth>
+            </RequireCustomer>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <RequireAdmin>
+              <AdminDashboardPage />
+            </RequireAdmin>
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />
