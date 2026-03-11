@@ -27,10 +27,13 @@ import com.kimtan.onlinebookstore.repository.OrderRepository;
 import com.kimtan.onlinebookstore.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -75,26 +78,23 @@ public class AdminService {
         );
     }
 
-    public List<AdminUserResponse> listUsers(String query) {
-        List<User> users;
+    public Page<AdminUserResponse> listUsers(String query, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("lastName").ascending().and(Sort.by("firstName").ascending()));
+        Page<User> users;
         if (query == null || query.isBlank()) {
-            users = userRepository.findAll();
+            users = userRepository.findAll(pageable);
         } else {
             users = userRepository.findByEmailContainingIgnoreCaseOrFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
-                    query, query, query
+                    query, query, query, pageable
             );
         }
-        return users.stream()
-                .sorted(Comparator.comparing(User::getLastName, String.CASE_INSENSITIVE_ORDER)
-                        .thenComparing(User::getFirstName, String.CASE_INSENSITIVE_ORDER))
-                .map(user -> new AdminUserResponse(
-                        user.getId(),
-                        user.getFirstName(),
-                        user.getLastName(),
-                        user.getEmail(),
-                        user.getRole()
-                ))
-                .toList();
+        return users.map(user -> new AdminUserResponse(
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                user.getRole()
+        ));
     }
 
     public BookResponseDTO createBook(AdminBookCreateRequest request) {
@@ -154,10 +154,20 @@ public class AdminService {
     }
 
     public List<AdminAuthorResponse> listAuthors() {
-        return authorRepository.findAll().stream()
-                .sorted(Comparator.comparing(Author::getName, String.CASE_INSENSITIVE_ORDER))
+        return authorRepository.findAll(Sort.by("name").ascending()).stream()
                 .map(author -> new AdminAuthorResponse(author.getId(), author.getName(), author.getBio()))
                 .toList();
+    }
+
+    public Page<AdminAuthorResponse> listAuthorsPaged(String query, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+        Page<Author> authors;
+        if (query == null || query.isBlank()) {
+            authors = authorRepository.findAll(pageable);
+        } else {
+            authors = authorRepository.findByNameContainingIgnoreCase(query, pageable);
+        }
+        return authors.map(author -> new AdminAuthorResponse(author.getId(), author.getName(), author.getBio()));
     }
 
     public AdminAuthorResponse createAuthor(AdminAuthorRequest request) {
@@ -196,10 +206,20 @@ public class AdminService {
     }
 
     public List<CategoryResponseDTO> listCategories() {
-        return categoryRepository.findAll().stream()
-                .sorted(Comparator.comparing(Category::getName, String.CASE_INSENSITIVE_ORDER))
+        return categoryRepository.findAll(Sort.by("name").ascending()).stream()
                 .map(category -> new CategoryResponseDTO(category.getId(), category.getName()))
                 .toList();
+    }
+
+    public Page<CategoryResponseDTO> listCategoriesPaged(String query, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+        Page<Category> categories;
+        if (query == null || query.isBlank()) {
+            categories = categoryRepository.findAll(pageable);
+        } else {
+            categories = categoryRepository.findByNameContainingIgnoreCase(query, pageable);
+        }
+        return categories.map(category -> new CategoryResponseDTO(category.getId(), category.getName()));
     }
 
     public CategoryResponseDTO createCategory(AdminCategoryRequest request) {

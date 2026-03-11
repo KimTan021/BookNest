@@ -139,9 +139,18 @@ export async function adminCreateBook(
   }, token);
 }
 
-export async function adminListUsers(token: string, query?: string): Promise<AdminUser[]> {
-  const queryString = query ? `?query=${encodeURIComponent(query)}` : "";
-  return request<AdminUser[]>(`/api/admin/users${queryString}`, {}, token);
+export async function adminListUsers(params: {
+  token: string;
+  page: number;
+  size: number;
+  query?: string;
+}): Promise<PageResponse<AdminUser>> {
+  const queryString = toQueryString({
+    page: params.page,
+    size: params.size,
+    query: params.query
+  });
+  return request<PageResponse<AdminUser>>(`/api/admin/users?${queryString}`, {}, params.token);
 }
 
 export async function adminGetBook(token: string, bookId: number): Promise<AdminBookDetail> {
@@ -165,6 +174,20 @@ export async function adminDeleteBook(token: string, bookId: number): Promise<vo
 
 export async function adminListAuthors(token: string): Promise<AdminAuthor[]> {
   return request<AdminAuthor[]>("/api/admin/authors", {}, token);
+}
+
+export async function adminSearchAuthors(params: {
+  token: string;
+  page: number;
+  size: number;
+  query?: string;
+}): Promise<PageResponse<AdminAuthor>> {
+  const queryString = toQueryString({
+    page: params.page,
+    size: params.size,
+    query: params.query
+  });
+  return request<PageResponse<AdminAuthor>>(`/api/admin/authors/search?${queryString}`, {}, params.token);
 }
 
 export async function adminCreateAuthor(
@@ -194,6 +217,20 @@ export async function adminDeleteAuthor(token: string, authorId: number): Promis
 
 export async function adminListCategories(token: string): Promise<Category[]> {
   return request<Category[]>("/api/admin/categories", {}, token);
+}
+
+export async function adminSearchCategories(params: {
+  token: string;
+  page: number;
+  size: number;
+  query?: string;
+}): Promise<PageResponse<Category>> {
+  const queryString = toQueryString({
+    page: params.page,
+    size: params.size,
+    query: params.query
+  });
+  return request<PageResponse<Category>>(`/api/admin/categories/search?${queryString}`, {}, params.token);
 }
 
 export async function adminCreateCategory(

@@ -1,0 +1,288 @@
+import { useEffect, useMemo, useState } from "react";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import Pagination from "@mui/material/Pagination";
+import Stack from "@mui/material/Stack";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
+import {
+  adminCreateCategory,
+  adminDeleteCategory,
+  adminSearchCategories,
+  adminUpdateCategory
+} from "../../../lib/api";
+import { useAuth } from "../../../state/AuthContext";
+import type { Category, PageResponse } from "../../../types/api";
+
+const PAGE_SIZE = 8;
+const SEARCH_DEBOUNCE_MS = 250;
+
+export function AdminCategoriesPage() {
+  const { token } = useAuth();
+  const [categoriesPage, setCategoriesPage] = useState<PageResponse<Category> | null>(null);
+  const [queryInput, setQueryInput] = useState("");
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(0);
+  const [status, setStatus] = useState("");
+
+  const [name, setName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editStatus, setEditStatus] = useState("");
+
+  const totalPages = categoriesPage?.totalPages ?? 1;
+  const currentPage = categoriesPage ? categoriesPage.number + 1 : page + 1;
+  const categories = categoriesPage?.content ?? [];
+
+  const searchLabel = useMemo(() => (query ? `Results for "${query}"` : "All categories"), [query]);
+
+  async function loadCategories(targetPage = page, targetQuery = query) {
+    if (!token) {
+      return;
+    }
+    setStatus("");
+    try {
+      const response = await adminSearchCategories({
+        token,
+        page: targetPage,
+        size: PAGE_SIZE,
+        query: targetQuery || undefined
+      });
+      setCategoriesPage(response);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load categories";
+      setStatus(message);
+    }
+  }
+
+  useEffect(() => {
+    loadCategories();
+  }, [token, page, query]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setQuery((currentQuery) => {
+        if (currentQuery === queryInput) {
+          return currentQuery;
+        }
+        setPage(0);
+        return queryInput;
+      });
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [queryInput]);
+
+  async function submitCategory() {
+    if (!token) {
+      setStatus("Login required.");
+      return;
+    }
+    setSubmitting(true);
+    setStatus("");
+    try {
+      await adminCreateCategory(token, { name: name.trim() });
+      setName("");
+      await loadCategories(0, query);
+      setPage(0);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to create category";
+      setStatus(message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function saveEdit() {
+    if (!token || editId === null) {
+      return;
+    }
+    setEditStatus("");
+    try {
+      await adminUpdateCategory(token, editId, { name: editName.trim() });
+      setEditOpen(false);
+      await loadCategories(page, query);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update category";
+      setEditStatus(message);
+    }
+  }
+
+  async function handleDelete(categoryId: number) {
+    if (!token) {
+      return;
+    }
+    const confirmed = window.confirm("Delete this category? This cannot be undone.");
+    if (!confirmed) {
+      return;
+    }
+    try {
+      await adminDeleteCategory(token, categoryId);
+      await loadCategories(page, query);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to delete category";
+      setStatus(message);
+    }
+  }
+
+  function applySearch(nextQuery?: string) {
+    const value = nextQuery ?? queryInput;
+    setQuery(value);
+    setPage(0);
+  }
+
+  return (
+    <Box component="section">
+      <Stack spacing={0.5} sx={{ mb: 2 }}>
+        <Typography variant="h4" component="h1">
+          Categories
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Keep the genre taxonomy clean and updated.
+        </Typography>
+      </Stack>
+
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            Add category
+          </Typography>
+          <Stack spacing={1.5}>
+            <TextField
+              label="Category name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              required
+            />
+            <Button variant="contained" onClick={submitCategory} disabled={submitting}>
+              {submitting ? "Creating..." : "Add category"}
+            </Button>
+            {status ? <Alert severity="error">{status}</Alert> : null}
+          </Stack>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }}>
+            <Box sx={{ flexGrow: 1 }}>
+              <Typography variant="h6">Category list</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {searchLabel}
+              </Typography>
+            </Box>
+            <TextField
+              label="Search categories"
+              value={queryInput}
+              onChange={(event) => setQueryInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  applySearch(queryInput);
+                }
+              }}
+              size="small"
+              InputProps={{ endAdornment: <SearchOutlinedIcon fontSize="small" /> }}
+            />
+          </Stack>
+          <Divider sx={{ my: 2 }} />
+          {status ? (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {status}
+            </Alert>
+          ) : null}
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell align="right">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {categories.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={2}>No categories found.</TableCell>
+                </TableRow>
+              ) : (
+                categories.map((category) => (
+                  <TableRow key={category.id}>
+                    <TableCell>{category.name}</TableCell>
+                    <TableCell align="right">
+                      <IconButton
+                        onClick={() => {
+                          setEditId(category.id);
+                          setEditName(category.name);
+                          setEditStatus("");
+                          setEditOpen(true);
+                        }}
+                        size="small"
+                      >
+                        <EditOutlinedIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton onClick={() => handleDelete(category.id)} size="small">
+                        <DeleteOutlineOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              Page {currentPage} of {Math.max(1, totalPages)}
+            </Typography>
+            <Pagination
+              count={Math.max(1, totalPages)}
+              page={currentPage}
+              onChange={(_, value) => setPage(value - 1)}
+            />
+          </Stack>
+        </CardContent>
+      </Card>
+
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="xs">
+        <DialogTitle>Edit category</DialogTitle>
+        <DialogContent>
+          <Stack spacing={1.5} sx={{ mt: 1 }}>
+            <TextField
+              label="Category name"
+              value={editName}
+              onChange={(event) => setEditName(event.target.value)}
+              required
+            />
+            {editStatus ? <Alert severity="error">{editStatus}</Alert> : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditOpen(false)}>Cancel</Button>
+          <Button onClick={saveEdit} variant="contained">
+            Save changes
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+}

@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -54,8 +55,12 @@ public class AdminController {
                     @ApiResponse(responseCode = "200", description = "Users returned successfully", content = @Content(schema = @Schema(implementation = AdminUserResponse.class)))
             }
     )
-    public List<AdminUserResponse> listUsers(@RequestParam(required = false) String query) {
-        return adminService.listUsers(query);
+    public Page<AdminUserResponse> listUsers(
+            @RequestParam(required = false) String query,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return adminService.listUsers(query, page, size);
     }
 
     @PostMapping("/books")
@@ -126,6 +131,22 @@ public class AdminController {
         return adminService.listAuthors();
     }
 
+    @GetMapping("/authors/search")
+    @Operation(
+            summary = "Search authors",
+            description = "Returns paginated authors with optional search query.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Authors returned successfully", content = @Content(schema = @Schema(implementation = AdminAuthorResponse.class)))
+            }
+    )
+    public Page<AdminAuthorResponse> searchAuthors(
+            @RequestParam(required = false) String query,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return adminService.listAuthorsPaged(query, page, size);
+    }
+
     @PostMapping("/authors")
     @Operation(
             summary = "Create author",
@@ -180,6 +201,22 @@ public class AdminController {
     )
     public List<CategoryResponseDTO> listCategories() {
         return adminService.listCategories();
+    }
+
+    @GetMapping("/categories/search")
+    @Operation(
+            summary = "Search categories",
+            description = "Returns paginated categories with optional search query.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Categories returned successfully", content = @Content(schema = @Schema(implementation = CategoryResponseDTO.class)))
+            }
+    )
+    public Page<CategoryResponseDTO> searchCategories(
+            @RequestParam(required = false) String query,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return adminService.listCategoriesPaged(query, page, size);
     }
 
     @PostMapping("/categories")
