@@ -22,6 +22,8 @@ import Typography from "@mui/material/Typography";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { TableSkeleton } from "../components/TableSkeleton";
 import {
   adminCreateCategory,
   adminDeleteCategory,
@@ -41,6 +43,7 @@ export function AdminCategoriesPage() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
   const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -49,6 +52,8 @@ export function AdminCategoriesPage() {
   const [editId, setEditId] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
   const [editStatus, setEditStatus] = useState("");
+
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const totalPages = categoriesPage?.totalPages ?? 1;
   const currentPage = categoriesPage ? categoriesPage.number + 1 : page + 1;
@@ -60,6 +65,7 @@ export function AdminCategoriesPage() {
     if (!token) {
       return;
     }
+    setLoading(true);
     setStatus("");
     try {
       const response = await adminSearchCategories({
@@ -72,6 +78,8 @@ export function AdminCategoriesPage() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to load categories";
       setStatus(message);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -130,20 +138,18 @@ export function AdminCategoriesPage() {
     }
   }
 
-  async function handleDelete(categoryId: number) {
-    if (!token) {
-      return;
-    }
-    const confirmed = window.confirm("Delete this category? This cannot be undone.");
-    if (!confirmed) {
+  async function performDelete() {
+    if (!token || deleteId === null) {
       return;
     }
     try {
-      await adminDeleteCategory(token, categoryId);
+      await adminDeleteCategory(token, deleteId);
+      setDeleteId(null);
       await loadCategories(page, query);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to delete category";
       setStatus(message);
+      setDeleteId(null);
     }
   }
 
@@ -213,53 +219,62 @@ export function AdminCategoriesPage() {
               {status}
             </Alert>
           ) : null}
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {categories.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={2}>No categories found.</TableCell>
-                </TableRow>
-              ) : (
-                categories.map((category) => (
-                  <TableRow key={category.id}>
-                    <TableCell>{category.name}</TableCell>
-                    <TableCell align="right">
-                      <IconButton
-                        onClick={() => {
-                          setEditId(category.id);
-                          setEditName(category.name);
-                          setEditStatus("");
-                          setEditOpen(true);
-                        }}
-                        size="small"
-                      >
-                        <EditOutlinedIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton onClick={() => handleDelete(category.id)} size="small">
-                        <DeleteOutlineOutlinedIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
+          {loading ? (
+            <Box sx={{ py: 2 }}>
+              <TableSkeleton columns={2} rows={PAGE_SIZE} />
+            </Box>
+          ) : (
+            <>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              Page {currentPage} of {Math.max(1, totalPages)}
-            </Typography>
-            <Pagination
-              count={Math.max(1, totalPages)}
-              page={currentPage}
-              onChange={(_, value) => setPage(value - 1)}
-            />
-          </Stack>
+                </TableHead>
+                <TableBody>
+                  {categories.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={2}>No categories found.</TableCell>
+                    </TableRow>
+                  ) : (
+                    categories.map((category) => (
+                      <TableRow key={category.id}>
+                        <TableCell>{category.name}</TableCell>
+                        <TableCell align="right">
+                          <IconButton
+                            onClick={() => {
+                              setEditId(category.id);
+                              setEditName(category.name);
+                              setEditStatus("");
+                              setEditOpen(true);
+                            }}
+                            size="small"
+                            color="primary"
+                          >
+                            <EditOutlinedIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton onClick={() => setDeleteId(category.id)} size="small" color="error">
+                            <DeleteOutlineOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Page {currentPage} of {Math.max(1, totalPages)}
+                </Typography>
+                <Pagination
+                  count={Math.max(1, totalPages)}
+                  page={currentPage}
+                  onChange={(_, value) => setPage(value - 1)}
+                />
+              </Stack>
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -283,6 +298,15 @@ export function AdminCategoriesPage() {
           </Button>
         </DialogActions>
       </Dialog>
+      <ConfirmDialog
+        open={deleteId !== null}
+        title="Delete Category"
+        description="Are you sure you want to permanently delete this category? This action cannot be undone."
+        confirmLabel="Delete Category"
+        confirmIcon={<DeleteOutlineOutlinedIcon />}
+        onConfirm={performDelete}
+        onCancel={() => setDeleteId(null)}
+      />
     </Box>
   );
 }

@@ -17,6 +17,7 @@ import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
+import { TableSkeleton } from "../components/TableSkeleton";
 import { adminCreateUser, adminListUsers } from "../../../lib/api";
 import { useAuth } from "../../../state/AuthContext";
 import type { AdminCreateUserRequest, AdminUser, PageResponse } from "../../../types/api";
@@ -217,9 +218,9 @@ export function AdminUsersPage() {
             </Alert>
           ) : null}
           {loading ? (
-            <Stack alignItems="center" sx={{ py: 3 }}>
-              <CircularProgress size={26} />
-            </Stack>
+            <Box sx={{ py: 2 }}>
+              <TableSkeleton columns={3} rows={PAGE_SIZE} />
+            </Box>
           ) : (
             <>
               <Table size="small">
@@ -253,7 +254,7 @@ export function AdminUsersPage() {
                 <Pagination
                   count={Math.max(1, totalPages)}
                   page={currentPage}
-                  onChange={(_, value) => setPage(value - 1)}
+                  onChange={(_event, value) => setPage(value - 1)}
                 />
               </Stack>
             </>

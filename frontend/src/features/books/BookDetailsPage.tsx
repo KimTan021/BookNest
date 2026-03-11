@@ -29,7 +29,7 @@ export function BookDetailsPage() {
     null
   );
   const [loading, setLoading] = useState(false);
-  const { token } = useAuth();
+  const { token, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -163,42 +163,58 @@ export function BookDetailsPage() {
 
                 <Divider sx={{ mb: 2 }} />
 
-                <Stack
-                  component="form"
-                  direction={{ xs: "column", sm: "row" }}
-                  spacing={1.5}
-                  alignItems={{ sm: "center" }}
-                  onSubmit={onAddToCart}
-                >
-                  <TextField
-                    label="Quantity"
-                    size="small"
-                    type="number"
-                    inputProps={{ min: 1, max: book.stock }}
-                    value={quantity}
-                    onChange={(event) => setQuantity(Math.max(1, Number(event.target.value)))}
-                    sx={{ width: { xs: "100%", sm: 140 } }}
-                  />
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    startIcon={<ShoppingCartOutlinedIcon />}
-                    disabled={book.stock <= 0}
-                    sx={{ width: { xs: "100%", sm: "auto" } }}
+                {isAdmin ? (
+                  <Stack spacing={2}>
+                    <Alert severity="info" variant="outlined">
+                      You are viewing this book as an Admin. Edit this listing from the Admin Dashboard.
+                    </Alert>
+                    <Button
+                      component={Link}
+                      to="/admin/books"
+                      variant="contained"
+                      sx={{ width: { xs: "100%", sm: "auto" }, alignSelf: "flex-start" }}
+                    >
+                      Manage book
+                    </Button>
+                  </Stack>
+                ) : (
+                  <Stack
+                    component="form"
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={1.5}
+                    alignItems={{ sm: "center" }}
+                    onSubmit={onAddToCart}
                   >
-                    Add to cart
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    startIcon={<BoltOutlinedIcon />}
-                    disabled={book.stock <= 0}
-                    onClick={onBuyNow}
-                    sx={{ width: { xs: "100%", sm: "auto" } }}
-                  >
-                    Buy now
-                  </Button>
-                </Stack>
+                    <TextField
+                      label="Quantity"
+                      size="small"
+                      type="number"
+                      inputProps={{ min: 1, max: book.stock }}
+                      value={quantity}
+                      onChange={(event) => setQuantity(Math.max(1, Number(event.target.value)))}
+                      sx={{ width: { xs: "100%", sm: 140 } }}
+                    />
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      startIcon={<ShoppingCartOutlinedIcon />}
+                      disabled={book.stock <= 0}
+                      sx={{ width: { xs: "100%", sm: "auto" } }}
+                    >
+                      Add to cart
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      startIcon={<BoltOutlinedIcon />}
+                      disabled={book.stock <= 0}
+                      onClick={onBuyNow}
+                      sx={{ width: { xs: "100%", sm: "auto" } }}
+                    >
+                      Buy now
+                    </Button>
+                  </Stack>
+                )}
               </Box>
             </Stack>
           </CardContent>

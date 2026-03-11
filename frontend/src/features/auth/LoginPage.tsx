@@ -10,7 +10,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { login } from "../../lib/api";
-import { useAuth } from "../../state/AuthContext";
+import { useAuth, parsePayload } from "../../state/AuthContext";
 
 interface LoginForm {
   email: string;
@@ -24,7 +24,9 @@ export function LoginPage() {
   const { setAuthToken } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const redirectTarget = (location.state as { from?: string } | undefined)?.from ?? "/";
+
+  const queryParams = new URLSearchParams(location.search);
+  const returnTo = queryParams.get("returnTo");
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -33,6 +35,12 @@ export function LoginPage() {
     try {
       const response = await login(form);
       setAuthToken(response.accessToken, response.expiresInSeconds);
+      
+      const payload = parsePayload(response.accessToken);
+      const isRoleAdmin = payload?.role === "ROLE_ADMIN";
+      
+      const redirectTarget = returnTo ?? (isRoleAdmin ? "/admin" : (location.state as { from?: string } | undefined)?.from ?? "/");
+      
       navigate(redirectTarget, { replace: true });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Login failed";

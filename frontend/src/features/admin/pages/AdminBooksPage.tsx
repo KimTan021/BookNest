@@ -23,7 +23,10 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import ErrorOutlineOutlinedIcon from "@mui/icons-material/ErrorOutlineOutlined";
 import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { TableSkeleton } from "../components/TableSkeleton";
 import {
   adminDeleteBook,
   adminGetBook,
@@ -59,6 +62,8 @@ export function AdminBooksPage() {
   const [editBook, setEditBook] = useState<AdminBookDetail | null>(null);
   const [editStatus, setEditStatus] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const totalPages = books?.totalPages ?? 1;
   const currentPage = books ? books.number + 1 : page + 1;
@@ -168,20 +173,18 @@ export function AdminBooksPage() {
     }
   }
 
-  async function handleDelete(bookId: number) {
-    if (!token) {
-      return;
-    }
-    const confirmed = window.confirm("Delete this book? This cannot be undone.");
-    if (!confirmed) {
+  async function performDelete() {
+    if (!token || deleteId === null) {
       return;
     }
     try {
-      await adminDeleteBook(token, bookId);
+      await adminDeleteBook(token, deleteId);
+      setDeleteId(null);
       await loadBooks();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to delete book";
       setStatus(message);
+      setDeleteId(null);
     }
   }
 
@@ -223,9 +226,9 @@ export function AdminBooksPage() {
             </Alert>
           ) : null}
           {loading ? (
-            <Stack alignItems="center" sx={{ py: 3 }}>
-              <CircularProgress size={26} />
-            </Stack>
+            <Box sx={{ py: 2 }}>
+              <TableSkeleton columns={5} rows={BOOK_PAGE_SIZE} />
+            </Box>
           ) : (
             <>
               <Table size="small">
@@ -247,10 +250,10 @@ export function AdminBooksPage() {
                         <TableCell align="right">${Number(book.price).toFixed(2)}</TableCell>
                         <TableCell align="right">{book.stock}</TableCell>
                         <TableCell align="right">
-                          <IconButton onClick={() => openEdit(book.id)} size="small">
+                          <IconButton onClick={() => openEdit(book.id)} size="small" color="primary">
                             <EditOutlinedIcon fontSize="small" />
                           </IconButton>
-                          <IconButton onClick={() => handleDelete(book.id)} size="small">
+                          <IconButton onClick={() => setDeleteId(book.id)} size="small" color="error">
                             <DeleteOutlineOutlinedIcon fontSize="small" />
                           </IconButton>
                         </TableCell>
@@ -372,6 +375,15 @@ export function AdminBooksPage() {
           </Button>
         </DialogActions>
       </Dialog>
+      <ConfirmDialog
+        open={deleteId !== null}
+        title="Delete Book"
+        description="Are you sure you want to permanently delete this book from the catalog? This action cannot be undone."
+        confirmLabel="Delete Book"
+        confirmIcon={<DeleteOutlineOutlinedIcon />}
+        onConfirm={performDelete}
+        onCancel={() => setDeleteId(null)}
+      />
     </Box>
   );
 }

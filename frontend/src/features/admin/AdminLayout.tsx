@@ -73,10 +73,12 @@ export function AdminLayout() {
               mb: 0.5,
               justifyContent: collapsed ? "center" : "flex-start",
               "&.active": {
-                bgcolor: "rgba(46, 125, 50, 0.12)",
-                "&:hover": { bgcolor: "rgba(46, 125, 50, 0.18)" }
+                bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)",
+                "&:hover": { 
+                  bgcolor: (theme) => theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.08)"
+                }
               },
-              "&:hover": { bgcolor: theme.palette.action.hover }
+              "&:hover": { bgcolor: "action.hover" }
             })}
           >
             <ListItemIcon sx={{ minWidth: collapsed ? 0 : 36, justifyContent: "center" }}>

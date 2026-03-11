@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import AddShoppingCartOutlinedIcon from "@mui/icons-material/AddShoppingCartOutlined";
 import Box from "@mui/material/Box";
@@ -19,8 +19,11 @@ import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { EmptyState } from "../../components/EmptyState";
 import { addToCart, listBooks, listCategories } from "../../lib/api";
 import { useAuth } from "../../state/AuthContext";
+import { useCart } from "../../state/CartContext";
+import { useToast } from "../../state/ToastContext";
 import type { Book, Category, PageResponse } from "../../types/api";
 
 const DEFAULT_PAGE_SIZE = 8;
@@ -36,10 +39,11 @@ export function BooksPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
-  const [actionNotice, setActionNotice] = useState<{ type: "success" | "error"; message: string } | null>(
-    null
-  );
   const { isAuthenticated, token, isAdmin } = useAuth();
+  const { refreshCart } = useCart();
+  const { showToast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const totalPages = booksPage?.totalPages ?? 1;
   const currentPage = booksPage ? booksPage.number + 1 : page + 1;
@@ -124,20 +128,20 @@ export function BooksPage() {
 
   async function onQuickAdd(bookId: number) {
     if (isAdmin) {
-      setActionNotice({ type: "error", message: "Admin accounts cannot use the cart." });
+      showToast("Admin accounts cannot use the cart.", "error");
       return;
     }
     if (!token) {
-      setActionNotice({ type: "error", message: "Login is required to add items to cart." });
+      navigate(`/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`);
       return;
     }
     try {
       await addToCart(token, bookId, 1);
-      const message = "Item added to cart.";
-      setActionNotice({ type: "success", message });
+      await refreshCart();
+      showToast("Item added to cart.", "success");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Add to cart failed";
-      setActionNotice({ type: "error", message });
+      showToast(message, "error");
     }
   }
 
@@ -252,6 +256,18 @@ export function BooksPage() {
                 </Card>
               </Grid>
             ))
+            : bookItems.length === 0 && !loading
+            ? (
+              <Grid size={{ xs: 12 }}>
+                <EmptyState
+                  icon={<SearchOutlinedIcon />}
+                  title="No books found"
+                  description="We couldn't find any books matching your search criteria. Try adjusting your filters."
+                  actionLabel="Clear Filters"
+                  onAction={() => applyFilters("", "")}
+                />
+              </Grid>
+            )
             : bookItems.map((book) => (
               <Grid key={book.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
                 <Card
@@ -265,12 +281,22 @@ export function BooksPage() {
                     }
                   }}
                 >
-                  <CardMedia
-                    component="img"
-                    height="250"
-                    image={book.imageUrl || "https://placehold.co/300x420?text=Book"}
-                    alt={book.title}
-                  />
+                  <Box sx={{ width: "100%", pt: "120%", position: "relative", bgcolor: "rgba(0,0,0,0.02)" }}>
+                    <CardMedia
+                      component="img"
+                      image={book.imageUrl || "https://placehold.co/300x420?text=Book"}
+                      alt={book.title}
+                      sx={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                        p: 2
+                      }}
+                    />
+                  </Box>
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Typography variant="h6" sx={{ fontSize: "1rem", mb: 0.5 }}>
                       {book.title}
@@ -291,16 +317,27 @@ export function BooksPage() {
                     >
                       View details
                     </Button>
-                    <Button
-                      type="button"
-                      variant="contained"
-                      size="small"
-                      startIcon={<AddShoppingCartOutlinedIcon />}
-                      onClick={() => onQuickAdd(book.id)}
-                      disabled={!isAuthenticated || isAdmin}
-                    >
-                      {isAdmin ? "Admin view" : "Add to cart"}
-                    </Button>
+                    {isAdmin ? (
+                      <Button
+                        component={Link}
+                        to="/admin/books"
+                        variant="contained"
+                        size="small"
+                      >
+                        Manage book
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="contained"
+                        size="small"
+                        startIcon={<AddShoppingCartOutlinedIcon />}
+                        onClick={() => onQuickAdd(book.id)}
+                        disabled={!isAuthenticated}
+                      >
+                        Add to cart
+                      </Button>
+                    )}
                   </CardActions>
                 </Card>
               </Grid>
@@ -340,22 +377,6 @@ export function BooksPage() {
           }}
         />
       </Stack>
-
-      <Snackbar
-        open={Boolean(actionNotice)}
-        autoHideDuration={2600}
-        onClose={() => setActionNotice(null)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert
-          onClose={() => setActionNotice(null)}
-          severity={actionNotice?.type ?? "success"}
-          variant="filled"
-          sx={{ width: "100%" }}
-        >
-          {actionNotice?.message ?? ""}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }

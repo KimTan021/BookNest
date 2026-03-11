@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import DeleteSweepOutlinedIcon from "@mui/icons-material/DeleteSweepOutlined";
 import Box from "@mui/material/Box";
@@ -12,10 +13,14 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
+import Grid from "@mui/material/Grid";
+import IconButton from "@mui/material/IconButton";
+import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
+import RemoveOutlinedIcon from "@mui/icons-material/RemoveOutlined";
 import PaidOutlinedIcon from "@mui/icons-material/PaidOutlined";
 import Paper from "@mui/material/Paper";
 import RemoveShoppingCartOutlinedIcon from "@mui/icons-material/RemoveShoppingCartOutlined";
-import Snackbar from "@mui/material/Snackbar";
+import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -25,18 +30,20 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { EmptyState } from "../../components/EmptyState";
 import { checkout, clearCart, getCart, removeCartItem, updateCartItem } from "../../lib/api";
 import { useAuth } from "../../state/AuthContext";
+import { useCart } from "../../state/CartContext";
+import { useToast } from "../../state/ToastContext";
 import type { Cart } from "../../types/api";
 
 export function CartPage() {
   const { token } = useAuth();
+  const { refreshCart } = useCart();
+  const { showToast } = useToast();
   const [cart, setCart] = useState<Cart | null>(null);
   const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(false);
-  const [feedback, setFeedback] = useState<{ message: string; severity: "success" | "error" | "info" } | null>(
-    null
-  );
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
   const quantityUpdateTimers = useRef<Record<number, number>>({});
@@ -56,7 +63,7 @@ export function CartPage() {
       setQuantities(nextQuantities);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to load cart";
-      setFeedback({ message, severity: "error" });
+      showToast(message, "error");
     } finally {
       setLoading(false);
     }
@@ -108,12 +115,13 @@ export function CartPage() {
 
     try {
       await removeCartItem(token, bookId);
-      setFeedback({ message: "Item removed.", severity: "success" });
+      await refreshCart();
+      showToast("Item removed.", "success");
     } catch (error) {
       setCart(previousCart);
       setQuantities(previousQuantities);
       const message = error instanceof Error ? error.message : "Remove failed";
-      setFeedback({ message, severity: "error" });
+      showToast(message, "error");
     }
   }
 
@@ -136,9 +144,10 @@ export function CartPage() {
     quantityUpdateTimers.current[bookId] = window.setTimeout(async () => {
       try {
         await updateCartItem(authToken, bookId, nextQuantity);
+        await refreshCart();
       } catch (error) {
         const message = error instanceof Error ? error.message : "Update failed";
-        setFeedback({ message, severity: "error" });
+        showToast(message, "error");
         await refresh();
       }
     }, 450);
@@ -159,99 +168,129 @@ export function CartPage() {
 
   return (
     <Box>
-      <Card>
-        <CardContent>
-          <Typography variant="h5" component="h1" sx={{ mb: 2 }}>
-            Cart
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Quantities update instantly and sync in the background.
-          </Typography>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mb: 2 }}>
+      <Typography variant="h4" component="h1" sx={{ mb: 1 }}>
+        Shopping Cart
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        Review your items before checkout.
+      </Typography>
+
+      {loading && !cart ? (
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+          <CircularProgress size={18} />
+          <Typography variant="body2">Loading cart...</Typography>
+        </Stack>
+      ) : cartItems.length === 0 ? (
+        <EmptyState
+          icon={<ShoppingBagOutlinedIcon />}
+          title="Your cart is empty"
+          description="Looks like you haven't added any books yet."
+          actionLabel="Start Shopping"
+          onAction={() => window.location.assign("/")}
+        />
+      ) : (
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, md: 8 }}>
+            <TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Title</TableCell>
+                    <TableCell>Price</TableCell>
+                    <TableCell align="center">Quantity</TableCell>
+                    <TableCell align="right">Subtotal</TableCell>
+                    <TableCell align="right"></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {cartItems.map((item) => (
+                    <TableRow key={item.bookId}>
+                      <TableCell>
+                        <Typography component={Link} to={`/books/${item.bookId}`} sx={{ textDecoration: "none", color: "inherit", fontWeight: 500 }}>
+                          {item.title}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>${Number(item.price).toFixed(2)}</TableCell>
+                      <TableCell align="center">
+                        <Stack direction="row" alignItems="center" justifyContent="center" spacing={1} sx={{ bgcolor: "background.default", p: 0.5, borderRadius: 1, border: "1px solid", borderColor: "divider", width: "fit-content", mx: "auto" }}>
+                          <IconButton size="small" onClick={() => onQuantityInputChange(item.bookId, String(item.quantity - 1))} disabled={item.quantity <= 1}>
+                            <RemoveOutlinedIcon fontSize="small" />
+                          </IconButton>
+                          <Typography sx={{ width: 28, textAlign: "center", fontWeight: 600 }}>{item.quantity}</Typography>
+                          <IconButton size="small" onClick={() => onQuantityInputChange(item.bookId, String(item.quantity + 1))}>
+                            <AddOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Stack>
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>${Number(item.subtotal).toFixed(2)}</TableCell>
+                      <TableCell align="right">
+                        <IconButton
+                          color="error"
+                          onClick={() => onRemoveItem(item.bookId)}
+                          size="small"
+                        >
+                          <RemoveShoppingCartOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
             <Button
               type="button"
               variant="outlined"
               color="error"
               startIcon={<DeleteSweepOutlinedIcon />}
               onClick={() => setClearDialogOpen(true)}
+              sx={{ mb: 2 }}
             >
               Clear cart
             </Button>
-            <Button type="button" variant="contained" startIcon={<PaidOutlinedIcon />} onClick={() => setCheckoutDialogOpen(true)}>
-              Checkout
-            </Button>
-          </Stack>
+          </Grid>
 
-          {loading ? (
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-              <CircularProgress size={18} />
-              <Typography variant="body2">Loading cart...</Typography>
-            </Stack>
-          ) : null}
-
-          <TableContainer component={Paper} variant="outlined">
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Title</TableCell>
-                  <TableCell>Price</TableCell>
-                  <TableCell>Quantity</TableCell>
-                  <TableCell>Subtotal</TableCell>
-                  <TableCell align="right">Action</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {cartItems.length > 0 ? (
-                  cartItems.map((item) => (
-                    <TableRow key={item.bookId}>
-                      <TableCell>{item.title}</TableCell>
-                      <TableCell>${Number(item.price).toFixed(2)}</TableCell>
-                      <TableCell sx={{ width: 160 }}>
-                        <TextField
-                          size="small"
-                          type="number"
-                          inputProps={{ min: 1 }}
-                          value={item.quantity}
-                          onChange={(event) => onQuantityInputChange(item.bookId, event.currentTarget.value)}
-                        />
-                      </TableCell>
-                      <TableCell>${Number(item.subtotal).toFixed(2)}</TableCell>
-                      <TableCell align="right">
-                        <Button
-                          type="button"
-                          variant="outlined"
-                          color="error"
-                          startIcon={<RemoveShoppingCartOutlinedIcon />}
-                          onClick={() => onRemoveItem(item.bookId)}
-                        >
-                          Remove
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5}>
-                      <Typography variant="body2" color="text.secondary">
-                        No items in cart.
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Card variant="outlined" sx={{ position: "sticky", top: 100 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ mb: 2 }}>Order Summary</Typography>
+                <Stack spacing={1.5} sx={{ mb: 3 }}>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography color="text.secondary">Items</Typography>
+                    <Typography>{cartItems.length}</Typography>
+                  </Stack>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography color="text.secondary">Subtotal</Typography>
+                    <Typography>${calculatedTotal.toFixed(2)}</Typography>
+                  </Stack>
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography color="text.secondary">Shipping</Typography>
+                    <Typography color="success.main">Free</Typography>
+                  </Stack>
+                  <Box sx={{ pt: 1.5, borderTop: "1px dashed", borderColor: "divider" }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <Typography variant="h6">Total</Typography>
+                      <Typography variant="h5" color="primary.main" sx={{ fontWeight: 700 }}>
+                        ${calculatedTotal.toFixed(2)}
                       </Typography>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
-            <Chip
-              color="primary"
-              variant="outlined"
-              label={`Total: $${calculatedTotal.toFixed(2)}`}
-              sx={{ fontWeight: 700, px: 1 }}
-            />
-          </Stack>
-        </CardContent>
-      </Card>
+                    </Stack>
+                  </Box>
+                </Stack>
+                <Button 
+                  type="button" 
+                  variant="contained" 
+                  size="large"
+                  fullWidth 
+                  startIcon={<PaidOutlinedIcon />} 
+                  onClick={() => setCheckoutDialogOpen(true)}
+                >
+                  Proceed to Checkout
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      )}
 
       <Dialog
         open={clearDialogOpen}
@@ -277,11 +316,12 @@ export function CartPage() {
               setClearDialogOpen(false);
               try {
                 await clearCart(token);
-                setFeedback({ message: "Cart cleared.", severity: "success" });
+                await refreshCart();
+                showToast("Cart cleared.", "success");
                 await refresh();
               } catch (error) {
                 const message = error instanceof Error ? error.message : "Clear cart failed";
-                setFeedback({ message, severity: "error" });
+                showToast(message, "error");
               }
             }}
           >
@@ -314,11 +354,12 @@ export function CartPage() {
               setCheckoutDialogOpen(false);
               try {
                 await checkout(token);
-                setFeedback({ message: "Checkout completed successfully.", severity: "success" });
+                await refreshCart();
+                showToast("Checkout completed successfully.", "success");
                 await refresh();
               } catch (error) {
                 const message = error instanceof Error ? error.message : "Checkout failed";
-                setFeedback({ message, severity: "error" });
+                showToast(message, "error");
               }
             }}
           >
@@ -327,16 +368,6 @@ export function CartPage() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar
-        open={Boolean(feedback)}
-        autoHideDuration={2200}
-        onClose={() => setFeedback(null)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert onClose={() => setFeedback(null)} severity={feedback?.severity ?? "info"} variant="filled">
-          {feedback?.message ?? ""}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }

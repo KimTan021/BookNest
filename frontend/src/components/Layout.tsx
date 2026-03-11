@@ -1,5 +1,6 @@
 import AppBar from "@mui/material/AppBar";
 import { alpha } from "@mui/material/styles";
+import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
@@ -27,10 +28,12 @@ import type { MouseEvent, ReactNode } from "react";
 import { useState } from "react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../state/AuthContext";
+import { useCart } from "../state/CartContext";
 import { useThemeMode } from "../state/ThemeModeContext";
 
 export function Layout({ children }: { children: ReactNode }) {
   const { isAuthenticated, logout, userLabel, isAdmin } = useAuth();
+  const { cartCount } = useCart();
   const { mode, toggleMode } = useThemeMode();
   const location = useLocation();
   const navigate = useNavigate();
@@ -177,7 +180,13 @@ export function Layout({ children }: { children: ReactNode }) {
                   {isAdmin ? navButton("/admin", "Admin", <AdminPanelSettingsOutlinedIcon />) : null}
                   {!isAdmin ? (
                     <>
-                      {navButton("/cart", "Cart", <ShoppingCartOutlinedIcon />)}
+                      {navButton(
+                        "/cart",
+                        "Cart",
+                        <Badge badgeContent={cartCount} color="error" overlap="circular">
+                          <ShoppingCartOutlinedIcon />
+                        </Badge>
+                      )}
                       {navButton("/orders", "Orders", <ReceiptLongOutlinedIcon />)}
                     </>
                   ) : null}
@@ -230,7 +239,9 @@ export function Layout({ children }: { children: ReactNode }) {
                     ? [
                         <MenuItem key="cart" selected={isActive("/cart")} onClick={() => mobileNavAction("/cart")}>
                           <ListItemIcon>
-                            <ShoppingCartOutlinedIcon fontSize="small" />
+                            <Badge badgeContent={cartCount} color="error" overlap="circular">
+                              <ShoppingCartOutlinedIcon fontSize="small" />
+                            </Badge>
                           </ListItemIcon>
                           <ListItemText>Cart</ListItemText>
                         </MenuItem>,

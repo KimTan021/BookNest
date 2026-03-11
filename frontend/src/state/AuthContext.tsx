@@ -14,7 +14,7 @@ interface AuthState {
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
-function parsePayload(token: string | null): { email?: string; sub?: string; role?: string } | null {
+export function parsePayload(token: string | null): { email?: string; sub?: string; role?: string } | null {
   if (!token) {
     return null;
   }
