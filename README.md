@@ -21,7 +21,9 @@ The repository is split into two main parts:
 - User registration and login with JWT
 - Protected cart operations
 - Checkout flow and order history
+- **Personalized favorites and wishlist management**
 - Admin dashboard for inventory and user management
+- **Real-time toast notifications for user actions**
 - Swagger / OpenAPI documentation
 - Database versioning with Flyway
 - Backend unit, controller, and integration tests
@@ -88,6 +90,8 @@ onlinebookstore/
 - Add books to cart
 - Update cart quantities
 - Remove items or clear the cart
+- **Add/remove books from favorites**
+- **Save books to personal wishlist**
 - Checkout the cart into an order
 - Review order history
 
@@ -127,10 +131,12 @@ Key frontend areas:
 - `features/cart`: cart management
 - `features/orders`: order history
 - `features/authors`: author details
-- `features/admin`: admin dashboard with books, categories, authors, users management
+- `features/favorites`: user favorites management
+- `features/wishlist`: user wishlist management
+- `features/admin`: admin dashboard with consolidated books, categories, authors, and users management
 - `state/AuthContext.tsx`: token persistence and auth state
 - `state/CartContext.tsx`: cart state management
-- `state/ToastContext.tsx`: toast notifications
+- `state/ToastContext.tsx`: global toast notification system
 - `state/ThemeModeContext.tsx`: theme switching (light/dark)
 - `lib/api.ts`: API client functions
 
@@ -316,6 +322,12 @@ npm run preview
 - `DELETE /api/cart/clear`
 - `POST /api/orders/checkout`
 - `GET /api/orders/history`
+- `GET /api/favorites`
+- `POST /api/favorites/add`
+- `DELETE /api/favorites/remove`
+- `GET /api/wishlist`
+- `POST /api/wishlist/add`
+- `DELETE /api/wishlist/remove`
 
 ### Admin Endpoints (Admin role required)
 
@@ -361,7 +373,6 @@ GitHub Actions also runs backend tests on pushes and pull requests to `main`.
 ## Future Improvements
 
 - Payment gateway integration
-- Wishlist and favorites
 - User profile management
 - Search by author and category together
 - Better image hosting instead of placeholder/seeded URLs
