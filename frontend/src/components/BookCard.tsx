@@ -147,7 +147,7 @@ export function BookCard({
           {isAdmin && (
             <Button
               component={Link}
-              to="/admin/books"
+              to={`/admin/books?edit=${book.id}`}
               variant="contained"
               size="small"
             >

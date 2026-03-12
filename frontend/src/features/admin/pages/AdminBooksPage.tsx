@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import { Link } from "react-router-dom";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -21,7 +24,8 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import LibraryAddOutlinedIcon from "@mui/icons-material/LibraryAddOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ErrorOutlineOutlinedIcon from "@mui/icons-material/ErrorOutlineOutlined";
@@ -31,6 +35,7 @@ import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { TableSkeleton } from "../components/TableSkeleton";
 import {
+  adminCreateBook,
   adminDeleteBook,
   adminGetBook,
   adminListAuthors,
@@ -44,6 +49,7 @@ import type {
   AdminAuthor,
   AdminBookDetail,
   AdminBookUpdateRequest,
+  AdminCreateBookRequest,
   Book,
   Category,
   PageResponse
@@ -54,6 +60,15 @@ const BOOK_PAGE_SIZE = 8;
 export function AdminBooksPage() {
   const { token } = useAuth();
   const { showToast } = useToast();
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const editId = params.get("edit");
+    if (editId && token) {
+      openEdit(Number(editId));
+    }
+  }, [location.search, token]);
   const [authors, setAuthors] = useState<AdminAuthor[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -63,6 +78,18 @@ export function AdminBooksPage() {
   const [books, setBooks] = useState<PageResponse<Book> | null>(null);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
+
+  const [addForm, setAddForm] = useState({
+    title: "",
+    description: "",
+    price: "",
+    stock: "",
+    imageUrl: "",
+    authorId: "",
+    categoryId: ""
+  });
+  const [adding, setAdding] = useState(false);
+  const [addStatus, setAddStatus] = useState("");
 
   const [editOpen, setEditOpen] = useState(false);
   const [editBook, setEditBook] = useState<AdminBookDetail | null>(null);
@@ -117,6 +144,64 @@ export function AdminBooksPage() {
   useEffect(() => {
     loadLookups();
   }, [token]);
+
+  async function submitNewBook() {
+    if (!token) {
+      setAddStatus("Login required.");
+      return;
+    }
+    setAdding(true);
+    setAddStatus("");
+    const priceValue = Number(addForm.price);
+    const stockValue = Number(addForm.stock);
+    const authorValue = Number(addForm.authorId);
+    const categoryValue = Number(addForm.categoryId);
+    if (Number.isNaN(priceValue) || priceValue <= 0) {
+      setAddStatus("Price must be a number greater than 0.");
+      setAdding(false);
+      return;
+    }
+    if (Number.isNaN(stockValue) || stockValue < 0) {
+      setAddStatus("Stock must be 0 or greater.");
+      setAdding(false);
+      return;
+    }
+    if (Number.isNaN(authorValue) || Number.isNaN(categoryValue)) {
+      setAddStatus("Author and category are required.");
+      setAdding(false);
+      return;
+    }
+    try {
+      const payload: AdminCreateBookRequest = {
+        title: addForm.title.trim(),
+        description: addForm.description.trim() || undefined,
+        price: priceValue,
+        stock: stockValue,
+        imageUrl: addForm.imageUrl.trim() || undefined,
+        authorId: authorValue,
+        categoryId: categoryValue
+      };
+      await adminCreateBook(token, payload);
+      setAddForm({
+        title: "",
+        description: "",
+        price: "",
+        stock: "",
+        imageUrl: "",
+        authorId: "",
+        categoryId: ""
+      });
+      showToast("Book added to catalog.", "success");
+      await loadBooks(0, query);
+      setPage(0);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to add book";
+      setAddStatus(message);
+      showToast(message, "error");
+    } finally {
+      setAdding(false);
+    }
+  }
 
   useEffect(() => {
     loadBooks();
@@ -233,6 +318,116 @@ export function AdminBooksPage() {
         </Typography>
       </Stack>
 
+      <Accordion className="glass-card" sx={{ mb: 4, borderRadius: '12px !important', overflow: 'hidden', '&:before': { display: 'none' } }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 4, py: 1 }}>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Box sx={{ p: 1, bgcolor: 'primary.main', borderRadius: 2, display: 'flex', color: 'white' }}>
+              <LibraryAddOutlinedIcon />
+            </Box>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>Add New Book</Typography>
+              <Typography variant="caption" color="text.secondary">Expand to add a new book to the catalog</Typography>
+            </Box>
+          </Stack>
+        </AccordionSummary>
+        <AccordionDetails sx={{ px: 4, pb: 4 }}>
+          <Stack spacing={2.5}>
+            <TextField
+              label="Title"
+              value={addForm.title}
+              onChange={(event) => setAddForm((prev) => ({ ...prev, title: event.target.value }))}
+              required
+              fullWidth
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+            />
+            <TextField
+              label="Description"
+              value={addForm.description}
+              onChange={(event) => setAddForm((prev) => ({ ...prev, description: event.target.value }))}
+              multiline
+              minRows={3}
+              fullWidth
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+            />
+            <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+              <TextField
+                label="Price"
+                type="number"
+                inputProps={{ min: 0, step: "0.01" }}
+                value={addForm.price}
+                onChange={(event) => setAddForm((prev) => ({ ...prev, price: event.target.value }))}
+                required
+                fullWidth
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+              <TextField
+                label="Stock"
+                type="number"
+                inputProps={{ min: 0, step: "1" }}
+                value={addForm.stock}
+                onChange={(event) => setAddForm((prev) => ({ ...prev, stock: event.target.value }))}
+                required
+                fullWidth
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+            </Stack>
+            <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+              <TextField
+                select
+                label="Author"
+                value={addForm.authorId}
+                onChange={(event) => setAddForm((prev) => ({ ...prev, authorId: event.target.value }))}
+                required
+                fullWidth
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              >
+                <MenuItem value="">Select author</MenuItem>
+                {authors.map((author) => (
+                  <MenuItem key={author.id} value={String(author.id)}>
+                    {author.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                select
+                label="Category"
+                value={addForm.categoryId}
+                onChange={(event) => setAddForm((prev) => ({ ...prev, categoryId: event.target.value }))}
+                required
+                fullWidth
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              >
+                <MenuItem value="">Select category</MenuItem>
+                {categories.map((category) => (
+                  <MenuItem key={category.id} value={String(category.id)}>
+                    {category.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Stack>
+            <TextField
+              label="Image URL"
+              value={addForm.imageUrl}
+              onChange={(event) => setAddForm((prev) => ({ ...prev, imageUrl: event.target.value }))}
+              placeholder="https://..."
+              fullWidth
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+            />
+            <Button
+              variant="contained"
+              startIcon={<LibraryAddOutlinedIcon />}
+              onClick={submitNewBook}
+              disabled={adding}
+              size="large"
+              sx={{ borderRadius: 2, py: 1.5, fontWeight: 600 }}
+            >
+              {adding ? "Adding to Catalog..." : "Add Book to Catalog"}
+            </Button>
+            {addStatus ? <Alert severity="error" sx={{ borderRadius: 2 }}>{addStatus}</Alert> : null}
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
+
       <Card className="glass-card" sx={{ borderRadius: 3 }}>
         <CardContent sx={{ p: 4 }}>
           <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }} sx={{ mb: 3 }}>
@@ -242,34 +437,23 @@ export function AdminBooksPage() {
                 {searchLabel}
               </Typography>
             </Box>
-            <Stack direction="row" spacing={2} alignItems="center">
-              <TextField
-                label="Search books..."
-                value={queryInput}
-                onChange={(event) => setQueryInput(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    applySearch(queryInput);
-                  }
-                }}
-                size="small"
-                sx={{ minWidth: 280 }}
-                InputProps={{ 
-                  startAdornment: <SearchOutlinedIcon fontSize="small" sx={{ mr: 1, color: "text.secondary" }} />,
-                  sx: { borderRadius: 2 }
-                }}
-              />
-              <Button 
-                component={Link} 
-                to="/admin/books/add" 
-                variant="contained" 
-                startIcon={<AddRoundedIcon />}
-                sx={{ borderRadius: 2, px: 3, height: 40, whiteSpace: 'nowrap' }}
-              >
-                Add Book
-              </Button>
-            </Stack>
+            <TextField
+              label="Search books..."
+              value={queryInput}
+              onChange={(event) => setQueryInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  applySearch(queryInput);
+                }
+              }}
+              size="small"
+              sx={{ minWidth: 280 }}
+              InputProps={{ 
+                startAdornment: <SearchOutlinedIcon fontSize="small" sx={{ mr: 1, color: "text.secondary" }} />,
+                sx: { borderRadius: 2 }
+              }}
+            />
           </Stack>
           <Divider sx={{ mb: 3 }} />
           {status ? (

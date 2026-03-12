@@ -10,7 +10,6 @@ import { BooksPage } from "./features/books/BooksPage";
 import { CartPage } from "./features/cart/CartPage";
 import { FavoritesPage } from "./features/favorites/FavoritesPage";
 import { AdminLayout } from "./features/admin/AdminLayout";
-import { AdminAddBookPage } from "./features/admin/pages/AdminAddBookPage";
 import { AdminAuthorsPage } from "./features/admin/pages/AdminAuthorsPage";
 import { AdminBooksPage } from "./features/admin/pages/AdminBooksPage";
 import { AdminCategoriesPage } from "./features/admin/pages/AdminCategoriesPage";
@@ -71,7 +70,6 @@ export default function App() {
           <Route index element={<AdminOverviewPage />} />
           <Route path="users" element={<AdminUsersPage />} />
           <Route path="books" element={<AdminBooksPage />} />
-          <Route path="books/new" element={<AdminAddBookPage />} />
           <Route path="authors" element={<AdminAuthorsPage />} />
           <Route path="categories" element={<AdminCategoriesPage />} />
         </Route>

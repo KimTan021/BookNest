@@ -27,7 +27,6 @@ const navItems = [
   { label: "Overview", to: "/admin", icon: <AdminPanelSettingsOutlinedIcon /> },
   { label: "Users", to: "/admin/users", icon: <GroupOutlinedIcon /> },
   { label: "Books", to: "/admin/books", icon: <BookOutlinedIcon /> },
-  { label: "Add Book", to: "/admin/books/new", icon: <LibraryAddOutlinedIcon /> },
   { label: "Authors", to: "/admin/authors", icon: <PersonOutlineOutlinedIcon /> },
   { label: "Categories", to: "/admin/categories", icon: <CategoryOutlinedIcon /> }
 ];

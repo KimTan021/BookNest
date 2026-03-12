@@ -81,6 +81,7 @@ export function BookDetailsPage() {
     }
     let cancelled = false;
     async function loadFlags() {
+      if (!token || !book) return;
       try {
         const [wishlist, favorites] = await Promise.all([
           getWishlist(token),
@@ -256,7 +257,7 @@ export function BookDetailsPage() {
                     </Alert>
                     <Button
                       component={Link}
-                      to="/admin/books"
+                      to={`/admin/books?edit=${book.id}`}
                       variant="contained"
                       sx={{ width: { xs: "100%", sm: "auto" }, alignSelf: "flex-start" }}
                     >
