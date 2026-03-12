@@ -101,6 +101,25 @@ class AdminServiceTest {
         verify(userRepository).findAll(any(Pageable.class));
     }
 
+    @Test
+    void setUserActiveShouldUpdateUserAndReturnResponse() {
+        User user = User.builder().id(1L).active(true).build();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenReturn(user);
+
+        AdminUserResponse response = adminService.setUserActive(1L, false);
+
+        assertFalse(user.isActive());
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void setUserActiveShouldThrowWhenUserNotFound() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> adminService.setUserActive(99L, true));
+    }
+
     // ─── Book Management ──────────────────────────────────────────────────────
 
     @Test

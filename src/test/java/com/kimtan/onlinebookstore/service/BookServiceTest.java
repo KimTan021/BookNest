@@ -53,7 +53,7 @@ class BookServiceTest {
         when(bookRepository.findByTitleContainingIgnoreCaseAndCategoryId(eq("dune"), eq(2L), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(book)));
 
-        Page<BookResponseDTO> response = bookService.searchBooks("dune", 2L, 0, 5);
+        Page<BookResponseDTO> response = bookService.searchBooks("dune", 2L, null, 0, 5);
 
         assertEquals(1, response.getTotalElements());
         assertEquals("Dune", response.getContent().getFirst().getTitle());
@@ -67,7 +67,7 @@ class BookServiceTest {
                 new PageImpl<>(List.of(createBook(3L, "1984", "George Orwell", "Classics")))
         );
 
-        Page<BookResponseDTO> response = bookService.searchBooks(null, null, 0, 10);
+        Page<BookResponseDTO> response = bookService.searchBooks(null, null, null, 0, 10);
 
         assertEquals(1, response.getTotalElements());
         verify(bookRepository).findAll(any(Pageable.class));

@@ -51,12 +51,12 @@ class BookControllerTest {
     @Test
     void searchBooksShouldDelegateToService() {
         Page<BookResponseDTO> expected = new PageImpl<>(List.of(createBookResponse()));
-        when(bookService.searchBooks("dune", 2L, 1, 8)).thenReturn(expected);
+        when(bookService.searchBooks("dune", 1L, 2L, 0, 10)).thenReturn(expected);
 
-        Page<BookResponseDTO> response = bookController.searchBooks("dune", 2L, 1, 8);
+        Page<BookResponseDTO> response = bookController.searchBooks("dune", 2L, 1L, 0, 10);
 
         assertSame(expected, response);
-        verify(bookService).searchBooks("dune", 2L, 1, 8);
+        verify(bookService).searchBooks("dune", 1L, 2L, 0, 10);
     }
 
     private BookResponseDTO createBookResponse() {

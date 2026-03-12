@@ -74,6 +74,17 @@ class AdminControllerTest {
         verify(adminService).listUsers(null, 0, 10);
     }
 
+    @Test
+    void updateUserStatusShouldDelegateToService() {
+        AdminUserResponse expected = new AdminUserResponse(1L, "Kim", "Tan", "kim@example.com", "ROLE_USER", false);
+        when(adminService.setUserActive(1L, false)).thenReturn(expected);
+
+        AdminUserResponse response = adminController.updateUserStatus(1L, false);
+
+        assertSame(expected, response);
+        verify(adminService).setUserActive(1L, false);
+    }
+
     // ─── Books ────────────────────────────────────────────────────────────────
 
     @Test
