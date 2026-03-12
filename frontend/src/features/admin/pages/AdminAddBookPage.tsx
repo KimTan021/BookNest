@@ -11,10 +11,12 @@ import Typography from "@mui/material/Typography";
 import LibraryAddOutlinedIcon from "@mui/icons-material/LibraryAddOutlined";
 import { adminCreateBook, adminListAuthors, adminListCategories } from "../../../lib/api";
 import { useAuth } from "../../../state/AuthContext";
+import { useToast } from "../../../state/ToastContext";
 import type { AdminAuthor, AdminCreateBookRequest, Category } from "../../../types/api";
 
 export function AdminAddBookPage() {
   const { token } = useAuth();
+  const { showToast } = useToast();
   const [authors, setAuthors] = useState<AdminAuthor[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -96,9 +98,11 @@ export function AdminAddBookPage() {
         authorId: "",
         categoryId: ""
       });
+      showToast("Book added to catalog.", "success");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to add book";
       setStatus(message);
+      showToast(message, "error");
     } finally {
       setSubmitting(false);
     }

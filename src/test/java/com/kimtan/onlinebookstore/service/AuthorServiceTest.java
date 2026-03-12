@@ -57,4 +57,20 @@ class AuthorServiceTest {
 
         assertEquals("Author not found", exception.getMessage());
     }
+
+    @Test
+    void getAllAuthorsShouldReturnAlphabeticallySortedList() {
+        when(authorRepository.findAll()).thenReturn(List.of(
+                Author.builder().name("Zebra").build(),
+                Author.builder().name("Apple").build(),
+                Author.builder().name("banana").build()
+        ));
+
+        var response = authorService.getAllAuthors();
+
+        assertEquals(3, response.size());
+        assertEquals("Apple", response.get(0).name());
+        assertEquals("banana", response.get(1).name());
+        assertEquals("Zebra", response.get(2).name());
+    }
 }

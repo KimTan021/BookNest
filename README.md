@@ -21,6 +21,7 @@ The repository is split into two main parts:
 - User registration and login with JWT
 - Protected cart operations
 - Checkout flow and order history
+- Admin dashboard for inventory and user management
 - Swagger / OpenAPI documentation
 - Database versioning with Flyway
 - Backend unit, controller, and integration tests
@@ -90,6 +91,15 @@ onlinebookstore/
 - Checkout the cart into an order
 - Review order history
 
+### Admin
+
+- Log in with admin credentials
+- View dashboard with sales metrics
+- Manage books (add, edit, delete)
+- Manage categories (add, delete)
+- Manage authors (add, edit, delete)
+- Manage users (view, create, delete)
+
 ## Architecture
 
 ### Backend
@@ -117,7 +127,11 @@ Key frontend areas:
 - `features/cart`: cart management
 - `features/orders`: order history
 - `features/authors`: author details
+- `features/admin`: admin dashboard with books, categories, authors, users management
 - `state/AuthContext.tsx`: token persistence and auth state
+- `state/CartContext.tsx`: cart state management
+- `state/ToastContext.tsx`: toast notifications
+- `state/ThemeModeContext.tsx`: theme switching (light/dark)
 - `lib/api.ts`: API client functions
 
 ## Database
@@ -191,7 +205,7 @@ JWT_SECRET=your-very-long-jwt-secret-at-least-32-bytes
 ### 1. Create the MySQL database
 
 ```sql
-CREATE DATABASE onlinebookstoreDB;
+CREATE DATABASE onlinebookstoreDB;1
 ```
 
 ### 2. Start the backend
@@ -303,6 +317,23 @@ npm run preview
 - `POST /api/orders/checkout`
 - `GET /api/orders/history`
 
+### Admin Endpoints (Admin role required)
+
+- `GET /api/admin/metrics`
+- `GET /api/admin/books`
+- `POST /api/admin/books`
+- `PUT /api/admin/books/{id}`
+- `DELETE /api/admin/books/{id}`
+- `GET /api/admin/categories`
+- `POST /api/admin/categories`
+- `DELETE /api/admin/categories/{id}`
+- `GET /api/admin/authors`
+- `POST /api/admin/authors`
+- `PUT /api/admin/authors/{id}`
+- `DELETE /api/admin/authors/{id}`
+- `GET /api/admin/users`
+- `POST /api/admin/users`
+
 Use the JWT returned by login or registration in the `Authorization` header:
 
 ```text
@@ -329,7 +360,6 @@ GitHub Actions also runs backend tests on pushes and pull requests to `main`.
 
 ## Future Improvements
 
-- Admin dashboard for inventory management
 - Payment gateway integration
 - Wishlist and favorites
 - User profile management

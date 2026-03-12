@@ -31,6 +31,7 @@ import {
   adminUpdateAuthor
 } from "../../../lib/api";
 import { useAuth } from "../../../state/AuthContext";
+import { useToast } from "../../../state/ToastContext";
 import type { AdminAuthor, AdminAuthorRequest, PageResponse } from "../../../types/api";
 
 const PAGE_SIZE = 8;
@@ -38,6 +39,7 @@ const SEARCH_DEBOUNCE_MS = 250;
 
 export function AdminAuthorsPage() {
   const { token } = useAuth();
+  const { showToast } = useToast();
   const [authorsPage, setAuthorsPage] = useState<PageResponse<AdminAuthor> | null>(null);
   const [queryInput, setQueryInput] = useState("");
   const [query, setQuery] = useState("");
@@ -117,9 +119,11 @@ export function AdminAuthorsPage() {
       setForm({ name: "", bio: "" });
       await loadAuthors(0, query);
       setPage(0);
+      showToast("Author added successfully.", "success");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to create author";
       setStatus(message);
+      showToast(message, "error");
     } finally {
       setSubmitting(false);
     }
@@ -137,9 +141,11 @@ export function AdminAuthorsPage() {
       });
       setEditOpen(false);
       await loadAuthors(page, query);
+      showToast("Author updated successfully.", "success");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to update author";
       setEditStatus(message);
+      showToast(message, "error");
     }
   }
 
@@ -151,9 +157,11 @@ export function AdminAuthorsPage() {
       await adminDeleteAuthor(token, deleteId);
       setDeleteId(null);
       await loadAuthors(page, query);
+      showToast("Author deleted.", "success");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to delete author";
       setStatus(message);
+      showToast(message, "error");
       setDeleteId(null);
     }
   }

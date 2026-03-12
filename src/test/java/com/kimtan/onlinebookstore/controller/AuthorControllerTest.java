@@ -33,4 +33,15 @@ class AuthorControllerTest {
         assertSame(expected, response);
         verify(authorService).getAuthorById(4L);
     }
+
+    @Test
+    void getAllAuthorsShouldDelegateToService() {
+        List<com.kimtan.onlinebookstore.dto.AuthorSummaryResponseDTO> expected = List.of();
+        when(authorService.getAllAuthors()).thenReturn(expected);
+
+        List<com.kimtan.onlinebookstore.dto.AuthorSummaryResponseDTO> response = authorController.getAllAuthors();
+
+        assertSame(expected, response);
+        verify(authorService).getAllAuthors();
+    }
 }

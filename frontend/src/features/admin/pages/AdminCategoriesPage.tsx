@@ -31,6 +31,7 @@ import {
   adminUpdateCategory
 } from "../../../lib/api";
 import { useAuth } from "../../../state/AuthContext";
+import { useToast } from "../../../state/ToastContext";
 import type { Category, PageResponse } from "../../../types/api";
 
 const PAGE_SIZE = 8;
@@ -38,6 +39,7 @@ const SEARCH_DEBOUNCE_MS = 250;
 
 export function AdminCategoriesPage() {
   const { token } = useAuth();
+  const { showToast } = useToast();
   const [categoriesPage, setCategoriesPage] = useState<PageResponse<Category> | null>(null);
   const [queryInput, setQueryInput] = useState("");
   const [query, setQuery] = useState("");
@@ -115,9 +117,11 @@ export function AdminCategoriesPage() {
       setName("");
       await loadCategories(0, query);
       setPage(0);
+      showToast("Category created successfully.", "success");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to create category";
       setStatus(message);
+      showToast(message, "error");
     } finally {
       setSubmitting(false);
     }
@@ -132,9 +136,11 @@ export function AdminCategoriesPage() {
       await adminUpdateCategory(token, editId, { name: editName.trim() });
       setEditOpen(false);
       await loadCategories(page, query);
+      showToast("Category updated successfully.", "success");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to update category";
       setEditStatus(message);
+      showToast(message, "error");
     }
   }
 
@@ -146,9 +152,11 @@ export function AdminCategoriesPage() {
       await adminDeleteCategory(token, deleteId);
       setDeleteId(null);
       await loadCategories(page, query);
+      showToast("Category deleted.", "success");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to delete category";
       setStatus(message);
+      showToast(message, "error");
       setDeleteId(null);
     }
   }

@@ -20,6 +20,7 @@ import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
 import { TableSkeleton } from "../components/TableSkeleton";
 import { adminCreateUser, adminListUsers } from "../../../lib/api";
 import { useAuth } from "../../../state/AuthContext";
+import { useToast } from "../../../state/ToastContext";
 import type { AdminCreateUserRequest, AdminUser, PageResponse } from "../../../types/api";
 
 const DEFAULT_ROLE = "ROLE_USER";
@@ -28,6 +29,7 @@ const SEARCH_DEBOUNCE_MS = 250;
 
 export function AdminUsersPage() {
   const { token } = useAuth();
+  const { showToast } = useToast();
   const [usersPage, setUsersPage] = useState<PageResponse<AdminUser> | null>(null);
   const [queryInput, setQueryInput] = useState("");
   const [query, setQuery] = useState("");
@@ -114,9 +116,11 @@ export function AdminUsersPage() {
       });
       await loadUsers(0, query);
       setPage(0);
+      showToast("User created successfully.", "success");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to create user";
       setFormStatus(message);
+      showToast(message, "error");
     } finally {
       setCreating(false);
     }

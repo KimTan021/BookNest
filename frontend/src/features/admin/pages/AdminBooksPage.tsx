@@ -36,6 +36,7 @@ import {
   listBooks
 } from "../../../lib/api";
 import { useAuth } from "../../../state/AuthContext";
+import { useToast } from "../../../state/ToastContext";
 import type {
   AdminAuthor,
   AdminBookDetail,
@@ -49,6 +50,7 @@ const BOOK_PAGE_SIZE = 8;
 
 export function AdminBooksPage() {
   const { token } = useAuth();
+  const { showToast } = useToast();
   const [authors, setAuthors] = useState<AdminAuthor[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -165,9 +167,11 @@ export function AdminBooksPage() {
       await adminUpdateBook(token, editBook.id, payload);
       setEditOpen(false);
       await loadBooks();
+      showToast("Book updated successfully.", "success");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to update book";
       setEditStatus(message);
+      showToast(message, "error");
     } finally {
       setSaving(false);
     }
@@ -181,9 +185,11 @@ export function AdminBooksPage() {
       await adminDeleteBook(token, deleteId);
       setDeleteId(null);
       await loadBooks();
+      showToast("Book deleted.", "success");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to delete book";
       setStatus(message);
+      showToast(message, "error");
       setDeleteId(null);
     }
   }
