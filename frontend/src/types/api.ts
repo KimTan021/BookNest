@@ -91,6 +91,7 @@ export interface AdminUser {
   lastName: string;
   email: string;
   role: string;
+  active: boolean;
 }
 
 export interface AdminCreateBookRequest {

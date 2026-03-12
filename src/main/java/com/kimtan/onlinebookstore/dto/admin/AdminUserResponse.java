@@ -5,6 +5,7 @@ public record AdminUserResponse(
         String firstName,
         String lastName,
         String email,
-        String role
+        String role,
+        boolean active
 ) {
 }

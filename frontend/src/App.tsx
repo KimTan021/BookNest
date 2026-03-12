@@ -8,6 +8,7 @@ import { AuthorPage } from "./features/authors/AuthorPage";
 import { BookDetailsPage } from "./features/books/BookDetailsPage";
 import { BooksPage } from "./features/books/BooksPage";
 import { CartPage } from "./features/cart/CartPage";
+import { FavoritesPage } from "./features/favorites/FavoritesPage";
 import { AdminLayout } from "./features/admin/AdminLayout";
 import { AdminAddBookPage } from "./features/admin/pages/AdminAddBookPage";
 import { AdminAuthorsPage } from "./features/admin/pages/AdminAuthorsPage";
@@ -16,6 +17,7 @@ import { AdminCategoriesPage } from "./features/admin/pages/AdminCategoriesPage"
 import { AdminOverviewPage } from "./features/admin/pages/AdminOverviewPage";
 import { AdminUsersPage } from "./features/admin/pages/AdminUsersPage";
 import { OrdersPage } from "./features/orders/OrdersPage";
+import { WishlistPage } from "./features/wishlist/WishlistPage";
 
 export default function App() {
   return (
@@ -39,6 +41,22 @@ export default function App() {
           element={
             <RequireCustomer>
               <OrdersPage />
+            </RequireCustomer>
+          }
+        />
+        <Route
+          path="/wishlist"
+          element={
+            <RequireCustomer>
+              <WishlistPage />
+            </RequireCustomer>
+          }
+        />
+        <Route
+          path="/favorites"
+          element={
+            <RequireCustomer>
+              <FavoritesPage />
             </RequireCustomer>
           }
         />

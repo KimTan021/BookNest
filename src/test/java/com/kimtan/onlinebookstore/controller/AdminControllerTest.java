@@ -42,7 +42,7 @@ class AdminControllerTest {
     void createUserShouldDelegateToService() {
         AdminUserCreateRequest request = new AdminUserCreateRequest(
                 "Kim", "Tan", "kim@example.com", "secret123", "ROLE_USER");
-        AdminUserResponse expected = new AdminUserResponse(1L, "Kim", "Tan", "kim@example.com", "ROLE_USER");
+        AdminUserResponse expected = new AdminUserResponse(1L, "Kim", "Tan", "kim@example.com", "ROLE_USER", true);
         when(adminService.createUser(request)).thenReturn(expected);
 
         AdminUserResponse response = adminController.createUser(request);
@@ -54,7 +54,7 @@ class AdminControllerTest {
     @Test
     void listUsersShouldDelegateToServiceWithQuery() {
         Page<AdminUserResponse> expected = new PageImpl<>(List.of(
-                new AdminUserResponse(1L, "Kim", "Tan", "kim@example.com", "ROLE_USER")));
+                new AdminUserResponse(1L, "Kim", "Tan", "kim@example.com", "ROLE_USER", true)));
         when(adminService.listUsers("kim", 0, 10)).thenReturn(expected);
 
         Page<AdminUserResponse> response = adminController.listUsers("kim", 0, 10);

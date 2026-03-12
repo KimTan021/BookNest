@@ -2,6 +2,8 @@ import { FormEvent, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import BookmarkBorderOutlinedIcon from "@mui/icons-material/BookmarkBorderOutlined";
+import BookmarkRoundedIcon from "@mui/icons-material/BookmarkRounded";
 import BoltOutlinedIcon from "@mui/icons-material/BoltOutlined";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -11,12 +13,16 @@ import CardMedia from "@mui/material/CardMedia";
 import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
+import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
+import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
+import IconButton from "@mui/material/IconButton";
 import Snackbar from "@mui/material/Snackbar";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { addToCart, getBook } from "../../lib/api";
+import { addToCart, addToFavorites, addToWishlist, getBook, getFavorites, getWishlist, removeFromFavorites, removeFromWishlist } from "../../lib/api";
 import { useAuth } from "../../state/AuthContext";
 import type { Book } from "../../types/api";
 import { useNavigate } from "react-router-dom";
@@ -29,6 +35,8 @@ export function BookDetailsPage() {
     null
   );
   const [loading, setLoading] = useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
   const { token, isAdmin } = useAuth();
   const navigate = useNavigate();
 
@@ -65,6 +73,36 @@ export function BookDetailsPage() {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (!token || !book || isAdmin) {
+      setIsWishlisted(false);
+      setIsFavorite(false);
+      return;
+    }
+    let cancelled = false;
+    async function loadFlags() {
+      try {
+        const [wishlist, favorites] = await Promise.all([
+          getWishlist(token),
+          getFavorites(token)
+        ]);
+        if (!cancelled) {
+          setIsWishlisted(wishlist.some((item) => item.id === book.id));
+          setIsFavorite(favorites.some((item) => item.id === book.id));
+        }
+      } catch {
+        if (!cancelled) {
+          setIsWishlisted(false);
+          setIsFavorite(false);
+        }
+      }
+    }
+    loadFlags();
+    return () => {
+      cancelled = true;
+    };
+  }, [token, book, isAdmin]);
+
   async function onAddToCart(event: FormEvent) {
     event.preventDefault();
     if (!book) {
@@ -98,6 +136,54 @@ export function BookDetailsPage() {
       navigate("/cart");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Buy now failed";
+      setFeedback({ message, severity: "error" });
+    }
+  }
+
+  async function toggleWishlist() {
+    if (!book) {
+      return;
+    }
+    if (!token) {
+      setFeedback({ message: "Login is required before saving to wishlist.", severity: "error" });
+      return;
+    }
+    try {
+      if (isWishlisted) {
+        await removeFromWishlist(token, book.id);
+        setIsWishlisted(false);
+        setFeedback({ message: "Removed from wishlist.", severity: "success" });
+      } else {
+        await addToWishlist(token, book.id);
+        setIsWishlisted(true);
+        setFeedback({ message: "Added to wishlist.", severity: "success" });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Wishlist update failed";
+      setFeedback({ message, severity: "error" });
+    }
+  }
+
+  async function toggleFavorite() {
+    if (!book) {
+      return;
+    }
+    if (!token) {
+      setFeedback({ message: "Login is required before adding favorites.", severity: "error" });
+      return;
+    }
+    try {
+      if (isFavorite) {
+        await removeFromFavorites(token, book.id);
+        setIsFavorite(false);
+        setFeedback({ message: "Removed from favorites.", severity: "success" });
+      } else {
+        await addToFavorites(token, book.id);
+        setIsFavorite(true);
+        setFeedback({ message: "Added to favorites.", severity: "success" });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Favorites update failed";
       setFeedback({ message, severity: "error" });
     }
   }
@@ -213,6 +299,18 @@ export function BookDetailsPage() {
                     >
                       Buy now
                     </Button>
+                    <Stack direction="row" spacing={1}>
+                      <Tooltip title={isFavorite ? "Remove from favorites" : "Add to favorites"}>
+                        <IconButton color={isFavorite ? "error" : "default"} onClick={toggleFavorite}>
+                          {isFavorite ? <FavoriteRoundedIcon /> : <FavoriteBorderOutlinedIcon />}
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}>
+                        <IconButton color={isWishlisted ? "primary" : "default"} onClick={toggleWishlist}>
+                          {isWishlisted ? <BookmarkRoundedIcon /> : <BookmarkBorderOutlinedIcon />}
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
                   </Stack>
                 )}
               </Box>

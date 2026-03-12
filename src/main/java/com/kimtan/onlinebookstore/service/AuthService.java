@@ -39,6 +39,7 @@ public class AuthService {
                 .email(email)
                 .password(passwordEncoder.encode(password))
                 .role("ROLE_USER")
+                .active(true)
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -62,6 +63,9 @@ public class AuthService {
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         assert userDetails != null;
+        if (!userDetails.isEnabled()) {
+            throw new DisabledException("Account is deactivated");
+        }
         String token = jwtUtil.generateToken(userDetails);
         return new AuthResponse(token, "Bearer", jwtUtil.getExpirationInSeconds());
     }

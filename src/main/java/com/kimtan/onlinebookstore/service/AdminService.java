@@ -61,6 +61,7 @@ public class AdminService {
                 .email(request.email())
                 .password(passwordEncoder.encode(request.password()))
                 .role(role)
+                .active(true)
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -69,13 +70,7 @@ public class AdminService {
                 .build();
         cartRepository.save(cart);
 
-        return new AdminUserResponse(
-                savedUser.getId(),
-                savedUser.getFirstName(),
-                savedUser.getLastName(),
-                savedUser.getEmail(),
-                savedUser.getRole()
-        );
+        return toAdminUserResponse(savedUser);
     }
 
     public Page<AdminUserResponse> listUsers(String query, int page, int size) {
@@ -88,13 +83,15 @@ public class AdminService {
                     query, query, query, pageable
             );
         }
-        return users.map(user -> new AdminUserResponse(
-                user.getId(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getEmail(),
-                user.getRole()
-        ));
+        return users.map(this::toAdminUserResponse);
+    }
+
+    public AdminUserResponse setUserActive(Long userId, boolean active) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        user.setActive(active);
+        User savedUser = userRepository.save(user);
+        return toAdminUserResponse(savedUser);
     }
 
     public BookResponseDTO createBook(AdminBookCreateRequest request) {
@@ -282,6 +279,17 @@ public class AdminService {
                 authorName,
                 categoryId,
                 categoryName
+        );
+    }
+
+    private AdminUserResponse toAdminUserResponse(User user) {
+        return new AdminUserResponse(
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                user.getRole(),
+                user.isActive()
         );
     }
 

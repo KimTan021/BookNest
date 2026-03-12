@@ -5,16 +5,14 @@ import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
-import CardActions from "@mui/material/CardActions";
 import CardContent from "@mui/material/CardContent";
-import CardMedia from "@mui/material/CardMedia";
 import CircularProgress from "@mui/material/CircularProgress";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import { BookCard } from "../../components/BookCard";
 import { getAuthor } from "../../lib/api";
-import type { AuthorDetails } from "../../types/api";
+import type { AuthorDetails, Book } from "../../types/api";
 
 export function AuthorPage() {
   const { id } = useParams();
@@ -79,50 +77,29 @@ export function AuthorPage() {
 
       {author ? (
         <>
-          <Card sx={{ mb: 2 }}>
-            <CardContent>
-              <Typography variant="h4" component="h1" sx={{ mb: 1 }}>
+          <Card sx={{ mb: 4, borderRadius: 3, overflow: "hidden" }} className="glass-card">
+            <CardContent sx={{ p: 4 }}>
+              <Typography variant="h3" component="h1" sx={{ mb: 2, fontWeight: 700, color: "primary.main" }}>
                 {author.name}
               </Typography>
-              <Typography variant="body1" color="text.secondary">
+              <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.8, fontSize: "1.1rem" }}>
                 {author.bio || "Author biography is not available yet."}
               </Typography>
             </CardContent>
           </Card>
 
-          <Typography variant="h6" sx={{ mb: 1.5 }}>
+          <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
             Books by {author.name}
           </Typography>
-          <Grid container spacing={2}>
+          <Grid container spacing={3}>
             {author.books.map((book) => (
               <Grid key={book.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-                <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-                  <CardMedia
-                    component="img"
-                    height="220"
-                    image={book.imageUrl || "https://placehold.co/300x420?text=Book"}
-                    alt={book.title}
-                  />
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography variant="subtitle1" sx={{ mb: 0.5 }}>
-                      {book.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      ${Number(book.price).toFixed(2)}
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button
-                      component={Link}
-                      to={`/books/${book.id}`}
-                      size="small"
-                      variant="outlined"
-                      startIcon={<VisibilityOutlinedIcon />}
-                    >
-                      View book
-                    </Button>
-                  </CardActions>
-                </Card>
+                <BookCard
+                  book={book as Book}
+                  onAddToCart={(bookId: number) => {
+                    // Navigate to details for cart action in AuthorPage context
+                  }}
+                />
               </Grid>
             ))}
           </Grid>

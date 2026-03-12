@@ -52,6 +52,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/categories/**").permitAll()
                         .requestMatchers("/api/authors/**").permitAll()
                         .requestMatchers("/api/cart/**").hasRole("USER")
+                        .requestMatchers("/api/wishlist/**").hasRole("USER")
+                        .requestMatchers("/api/favorites/**").hasRole("USER")
                         .requestMatchers("/api/orders/**").hasRole("USER")
                         .anyRequest().authenticated()
                 )
@@ -95,7 +97,7 @@ public class SecurityConfig {
                 .filter(pattern -> !pattern.isEmpty())
                 .toList();
         config.setAllowedOriginPatterns(originPatterns);
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(false);

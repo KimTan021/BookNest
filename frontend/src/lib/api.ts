@@ -97,8 +97,9 @@ export async function listBooks(params: {
   size: number;
   title?: string;
   categoryId?: number;
+  authorId?: number;
 }): Promise<PageResponse<Book>> {
-  const path = params.title || params.categoryId ? "/api/books/search" : "/api/books";
+  const path = params.title || params.categoryId || params.authorId ? "/api/books/search" : "/api/books";
   const query = toQueryString(params);
   return request<PageResponse<Book>>(`${path}?${query}`);
 }
@@ -113,6 +114,30 @@ export async function getBook(bookId: number): Promise<Book> {
 
 export async function getAuthor(authorId: number): Promise<AuthorDetails> {
   return request<AuthorDetails>(`/api/authors/${authorId}`);
+}
+
+export async function getWishlist(token: string): Promise<Book[]> {
+  return request<Book[]>("/api/wishlist", {}, token);
+}
+
+export async function addToWishlist(token: string, bookId: number): Promise<void> {
+  await request<void>(`/api/wishlist/add?bookId=${bookId}`, { method: "POST" }, token);
+}
+
+export async function removeFromWishlist(token: string, bookId: number): Promise<void> {
+  await request<void>(`/api/wishlist/remove?bookId=${bookId}`, { method: "DELETE" }, token);
+}
+
+export async function getFavorites(token: string): Promise<Book[]> {
+  return request<Book[]>("/api/favorites", {}, token);
+}
+
+export async function addToFavorites(token: string, bookId: number): Promise<void> {
+  await request<void>(`/api/favorites/add?bookId=${bookId}`, { method: "POST" }, token);
+}
+
+export async function removeFromFavorites(token: string, bookId: number): Promise<void> {
+  await request<void>(`/api/favorites/remove?bookId=${bookId}`, { method: "DELETE" }, token);
 }
 
 export async function getAdminMetrics(token: string): Promise<AdminMetrics> {
@@ -151,6 +176,16 @@ export async function adminListUsers(params: {
     query: params.query
   });
   return request<PageResponse<AdminUser>>(`/api/admin/users?${queryString}`, {}, params.token);
+}
+
+export async function adminUpdateUserStatus(
+  token: string,
+  userId: number,
+  active: boolean
+): Promise<AdminUser> {
+  return request<AdminUser>(`/api/admin/users/${userId}/status?active=${active}`, {
+    method: "PATCH"
+  }, token);
 }
 
 export async function adminGetBook(token: string, bookId: number): Promise<AdminBookDetail> {

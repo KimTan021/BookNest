@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
+import CircularProgress from "@mui/material/CircularProgress";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -19,8 +23,10 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { TableSkeleton } from "../components/TableSkeleton";
@@ -173,54 +179,75 @@ export function AdminAuthorsPage() {
   }
 
   return (
-    <Box component="section">
-      <Stack spacing={0.5} sx={{ mb: 2 }}>
-        <Typography variant="h4" component="h1">
-          Authors
+    <Box component="section" className="animate-fade-in">
+      <Stack spacing={0.5} sx={{ mb: 4 }}>
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
+          Manage Authors
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Manage author profiles and bios.
+        <Typography variant="body1" color="text.secondary">
+          Control author profiles, bios, and their association with your books.
         </Typography>
       </Stack>
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            Add author
-          </Typography>
-          <Stack spacing={1.5}>
+      <Accordion className="glass-card" sx={{ mb: 4, borderRadius: '12px !important', overflow: 'hidden', '&:before': { display: 'none' } }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 4, py: 1 }}>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Box sx={{ p: 1, bgcolor: 'primary.main', borderRadius: 2, display: 'flex', color: 'white' }}>
+              <AddRoundedIcon />
+            </Box>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>Add New Author</Typography>
+              <Typography variant="caption" color="text.secondary">Expand to fill in author details</Typography>
+            </Box>
+          </Stack>
+        </AccordionSummary>
+        <AccordionDetails sx={{ px: 4, pb: 4 }}>
+          <Stack spacing={2.5}>
             <TextField
-              label="Author name"
+              label="Author Full Name"
+              placeholder="e.g. George Orwell"
               value={form.name}
               onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
               required
+              fullWidth
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
             />
             <TextField
-              label="Bio"
+              label="Biography"
+              placeholder="Brief professional history of the author..."
               value={form.bio ?? ""}
               onChange={(event) => setForm((prev) => ({ ...prev, bio: event.target.value }))}
               multiline
-              minRows={2}
+              minRows={3}
+              fullWidth
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
             />
-            <Button variant="contained" onClick={submitAuthor} disabled={submitting}>
-              {submitting ? "Creating..." : "Add author"}
+            <Button 
+              variant="contained" 
+              onClick={submitAuthor} 
+              disabled={submitting}
+              size="large"
+              sx={{ borderRadius: 2, py: 1.5, fontWeight: 600 }}
+              startIcon={submitting ? <CircularProgress size={20} color="inherit" /> : <AddRoundedIcon />}
+            >
+              {submitting ? "Creating Author..." : "Create Author Profile"}
             </Button>
-            {status ? <Alert severity="error">{status}</Alert> : null}
+            {status ? <Alert severity="error" sx={{ borderRadius: 2 }}>{status}</Alert> : null}
           </Stack>
-        </CardContent>
-      </Card>
+        </AccordionDetails>
+      </Accordion>
 
-      <Card>
-        <CardContent>
+      <Card className="glass-card" sx={{ borderRadius: 3 }}>
+        <CardContent sx={{ p: 4 }}>
           <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }}>
             <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="h6">Author list</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>Author Directory</Typography>
               <Typography variant="body2" color="text.secondary">
                 {searchLabel}
               </Typography>
             </Box>
             <TextField
-              label="Search authors"
+              label="Filter authors..."
               value={queryInput}
               onChange={(event) => setQueryInput(event.target.value)}
               onKeyDown={(event) => {
@@ -230,68 +257,89 @@ export function AdminAuthorsPage() {
                 }
               }}
               size="small"
-              InputProps={{ endAdornment: <SearchOutlinedIcon fontSize="small" /> }}
+              sx={{ minWidth: 280 }}
+              InputProps={{ 
+                startAdornment: <SearchOutlinedIcon fontSize="small" sx={{ mr: 1, color: "text.secondary" }} />,
+                sx: { borderRadius: 2 }
+              }}
             />
           </Stack>
-          <Divider sx={{ my: 2 }} />
-          {status ? (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {status}
-            </Alert>
-          ) : null}
+          <Divider sx={{ my: 3 }} />
+          
           {loading ? (
             <Box sx={{ py: 2 }}>
               <TableSkeleton columns={3} rows={PAGE_SIZE} />
             </Box>
           ) : (
             <>
-              <Table size="small">
+              <Table size="medium">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Bio</TableCell>
-                    <TableCell align="right">Actions</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Biography</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {authors.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={3}>No authors found.</TableCell>
+                      <TableCell colSpan={3} sx={{ textAlign: 'center', py: 4 }}>
+                        <Typography variant="body2" color="text.secondary">No authors found.</Typography>
+                      </TableCell>
                     </TableRow>
                   ) : (
                     authors.map((author) => (
-                      <TableRow key={author.id}>
-                        <TableCell>{author.name}</TableCell>
-                        <TableCell>{author.bio ?? "-"}</TableCell>
-                        <TableCell align="right">
-                          <IconButton
-                            onClick={() => {
-                              setEditAuthor(author);
-                              setEditStatus("");
-                              setEditOpen(true);
+                      <TableRow key={author.id} hover>
+                        <TableCell sx={{ fontWeight: 500, width: '25%' }}>{author.name}</TableCell>
+                        <TableCell sx={{ color: 'text.secondary', width: '60%' }}>
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              lineHeight: 1.6
                             }}
-                            size="small"
-                            color="primary"
                           >
-                            <EditOutlinedIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton onClick={() => setDeleteId(author.id)} size="small" color="error">
-                            <DeleteOutlineOutlinedIcon fontSize="small" />
-                          </IconButton>
+                            {author.bio || "No biography provided."}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Stack direction="row" spacing={1} justifyContent="flex-end">
+                            <IconButton
+                              onClick={() => {
+                                setEditAuthor(author);
+                                setEditStatus("");
+                                setEditOpen(true);
+                              }}
+                              size="small"
+                              color="primary"
+                              title="Edit Author"
+                            >
+                              <EditOutlinedIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton onClick={() => setDeleteId(author.id)} size="small" color="error" title="Delete Author">
+                              <DeleteOutlineOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Stack>
                         </TableCell>
                       </TableRow>
                     ))
                   )}
                 </TableBody>
               </Table>
-              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 3 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Page {currentPage} of {Math.max(1, totalPages)}
+                  Showing {authors.length} of {authorsPage?.totalElements ?? 0} authors
                 </Typography>
                 <Pagination
                   count={Math.max(1, totalPages)}
                   page={currentPage}
                   onChange={(_, value) => setPage(value - 1)}
+                  color="primary"
+                  shape="rounded"
                 />
               </Stack>
             </>

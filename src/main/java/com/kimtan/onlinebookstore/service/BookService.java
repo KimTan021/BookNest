@@ -24,10 +24,24 @@ public class BookService {
 
     public Page<BookResponseDTO> searchBooks(String title,
                                              Long categoryId,
+                                             Long authorId,
                                              int page,
                                              int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("title").ascending());
+
+        if (title != null && authorId != null && categoryId != null) {
+            return bookRepository
+                    .findByTitleContainingIgnoreCaseAndAuthorIdAndCategoryId(
+                            title, authorId, categoryId, pageable)
+                    .map(this::mapToDTO);
+        }
+
+        if (title != null && authorId != null) {
+            return bookRepository
+                    .findByTitleContainingIgnoreCaseAndAuthorId(title, authorId, pageable)
+                    .map(this::mapToDTO);
+        }
 
         if (title != null && categoryId != null) {
             return bookRepository
@@ -36,9 +50,21 @@ public class BookService {
                     .map(this::mapToDTO);
         }
 
+        if (authorId != null && categoryId != null) {
+            return bookRepository
+                    .findByAuthorIdAndCategoryId(authorId, categoryId, pageable)
+                    .map(this::mapToDTO);
+        }
+
         if (title != null) {
             return bookRepository
                     .findByTitleContainingIgnoreCase(title, pageable)
+                    .map(this::mapToDTO);
+        }
+
+        if (authorId != null) {
+            return bookRepository
+                    .findByAuthorId(authorId, pageable)
                     .map(this::mapToDTO);
         }
 

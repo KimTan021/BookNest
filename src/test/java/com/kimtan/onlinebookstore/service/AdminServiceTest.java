@@ -56,6 +56,7 @@ class AdminServiceTest {
         AdminUserResponse response = adminService.createUser(request);
 
         assertEquals("ROLE_ADMIN", response.role());
+        assertTrue(response.active());
         verify(userRepository).save(any(User.class));
         verify(cartRepository).save(any(Cart.class));
     }
@@ -77,6 +78,7 @@ class AdminServiceTest {
         AdminUserResponse response = adminService.createUser(request);
 
         assertEquals("ROLE_USER", response.role());
+        assertTrue(response.active());
     }
 
     @Test

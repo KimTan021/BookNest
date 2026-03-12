@@ -15,7 +15,9 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
 import BookOutlinedIcon from "@mui/icons-material/BookOutlined";
+import BookmarkBorderOutlinedIcon from "@mui/icons-material/BookmarkBorderOutlined";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
+import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import LoginOutlinedIcon from "@mui/icons-material/LoginOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
@@ -187,6 +189,8 @@ export function Layout({ children }: { children: ReactNode }) {
                           <ShoppingCartOutlinedIcon />
                         </Badge>
                       )}
+                      {navButton("/wishlist", "Wishlist", <BookmarkBorderOutlinedIcon />)}
+                      {navButton("/favorites", "Favorites", <FavoriteBorderOutlinedIcon />)}
                       {navButton("/orders", "Orders", <ReceiptLongOutlinedIcon />)}
                     </>
                   ) : null}
@@ -244,6 +248,18 @@ export function Layout({ children }: { children: ReactNode }) {
                             </Badge>
                           </ListItemIcon>
                           <ListItemText>Cart</ListItemText>
+                        </MenuItem>,
+                        <MenuItem key="wishlist" selected={isActive("/wishlist")} onClick={() => mobileNavAction("/wishlist")}>
+                          <ListItemIcon>
+                            <BookmarkBorderOutlinedIcon fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText>Wishlist</ListItemText>
+                        </MenuItem>,
+                        <MenuItem key="favorites" selected={isActive("/favorites")} onClick={() => mobileNavAction("/favorites")}>
+                          <ListItemIcon>
+                            <FavoriteBorderOutlinedIcon fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText>Favorites</ListItemText>
                         </MenuItem>,
                         <MenuItem key="orders" selected={isActive("/orders")} onClick={() => mobileNavAction("/orders")}>
                           <ListItemIcon>

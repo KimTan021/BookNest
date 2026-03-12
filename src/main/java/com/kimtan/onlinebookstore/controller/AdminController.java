@@ -67,6 +67,22 @@ public class AdminController {
         return adminService.listUsers(query, page, size);
     }
 
+    @PatchMapping("/users/{id}/status")
+    @Operation(
+            summary = "Update user status",
+            description = "Activate or deactivate a user account.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "User updated successfully", content = @Content(schema = @Schema(implementation = AdminUserResponse.class))),
+                    @ApiResponse(responseCode = "404", description = "User not found", content = @Content(schema = @Schema(implementation = ApiError.class)))
+            }
+    )
+    public AdminUserResponse updateUserStatus(
+            @PathVariable Long id,
+            @RequestParam boolean active
+    ) {
+        return adminService.setUserActive(id, active);
+    }
+
     @PostMapping("/books")
     @Operation(
             summary = "Add a new book",

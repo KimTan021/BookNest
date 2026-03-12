@@ -1,13 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import Alert from "@mui/material/Alert";
-import AddShoppingCartOutlinedIcon from "@mui/icons-material/AddShoppingCartOutlined";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
-import CardActions from "@mui/material/CardActions";
 import CardContent from "@mui/material/CardContent";
-import CardMedia from "@mui/material/CardMedia";
 import CircularProgress from "@mui/material/CircularProgress";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
@@ -15,16 +12,16 @@ import Pagination from "@mui/material/Pagination";
 import RefreshOutlinedIcon from "@mui/icons-material/RefreshOutlined";
 import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
 import Skeleton from "@mui/material/Skeleton";
-import Snackbar from "@mui/material/Snackbar";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { BookCard } from "../../components/BookCard";
 import { EmptyState } from "../../components/EmptyState";
-import { addToCart, listBooks, listCategories } from "../../lib/api";
+import { addToCart, addToFavorites, addToWishlist, getFavorites, getWishlist, listAuthors, listBooks, listCategories, removeFromFavorites, removeFromWishlist } from "../../lib/api";
 import { useAuth } from "../../state/AuthContext";
 import { useCart } from "../../state/CartContext";
 import { useToast } from "../../state/ToastContext";
-import type { Book, Category, PageResponse } from "../../types/api";
+import type { AuthorSummary, Book, Category, PageResponse } from "../../types/api";
 
 const DEFAULT_PAGE_SIZE = 8;
 const TITLE_SEARCH_DEBOUNCE_MS = 250;
@@ -32,13 +29,18 @@ const TITLE_SEARCH_DEBOUNCE_MS = 250;
 export function BooksPage() {
   const [titleInput, setTitleInput] = useState("");
   const [categoryIdInput, setCategoryIdInput] = useState("");
+  const [authorIdInput, setAuthorIdInput] = useState("");
   const [title, setTitle] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [authorId, setAuthorId] = useState("");
   const [page, setPage] = useState(0);
   const [booksPage, setBooksPage] = useState<PageResponse<Book> | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [authors, setAuthors] = useState<AuthorSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
+  const [wishlistIds, setWishlistIds] = useState<Set<number>>(new Set());
+  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set());
   const { isAuthenticated, token, isAdmin } = useAuth();
   const { refreshCart } = useCart();
   const { showToast } = useToast();
@@ -58,25 +60,69 @@ export function BooksPage() {
     return Number.isNaN(parsed) ? undefined : parsed;
   }, [categoryId]);
 
+  const authorParam = useMemo(() => {
+    if (!authorId) {
+      return undefined;
+    }
+    const parsed = Number(authorId);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  }, [authorId]);
+
   useEffect(() => {
     let cancelled = false;
-    async function loadCategories() {
+    async function loadFilters() {
       try {
-        const response = await listCategories();
+        const [categoryResponse, authorResponse] = await Promise.all([
+          listCategories(),
+          listAuthors()
+        ]);
         if (!cancelled) {
-          setCategories(response);
+          setCategories(categoryResponse);
+          setAuthors(authorResponse);
         }
       } catch {
         if (!cancelled) {
           setCategories([]);
+          setAuthors([]);
         }
       }
     }
-    loadCategories();
+    loadFilters();
     return () => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!token || isAdmin) {
+      setWishlistIds(new Set());
+      setFavoriteIds(new Set());
+      return;
+    }
+    let cancelled = false;
+    async function loadLists() {
+      if (!token) return;
+      try {
+        const [wishlist, favorites] = await Promise.all([
+          getWishlist(token),
+          getFavorites(token)
+        ]);
+        if (!cancelled) {
+          setWishlistIds(new Set(wishlist.map((item) => item.id)));
+          setFavoriteIds(new Set(favorites.map((item) => item.id)));
+        }
+      } catch {
+        if (!cancelled) {
+          setWishlistIds(new Set());
+          setFavoriteIds(new Set());
+        }
+      }
+    }
+    loadLists();
+    return () => {
+      cancelled = true;
+    };
+  }, [token, isAdmin]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -104,7 +150,8 @@ export function BooksPage() {
           page,
           size: DEFAULT_PAGE_SIZE,
           title: title || undefined,
-          categoryId: categoryParam
+          categoryId: categoryParam,
+          authorId: authorParam
         });
         if (!cancelled) {
           setBooksPage(response);
@@ -124,7 +171,7 @@ export function BooksPage() {
     return () => {
       cancelled = true;
     };
-  }, [page, title, categoryParam]);
+  }, [page, title, categoryParam, authorParam]);
 
   async function onQuickAdd(bookId: number) {
     if (isAdmin) {
@@ -145,13 +192,65 @@ export function BooksPage() {
     }
   }
 
-  function applyFilters(nextCategoryIdInput?: string, nextTitleInput?: string) {
+  function applyFilters(nextCategoryIdInput?: string, nextTitleInput?: string, nextAuthorIdInput?: string) {
     const categoryValue = nextCategoryIdInput ?? categoryIdInput;
     const titleValue = nextTitleInput ?? titleInput;
+    const authorValue = nextAuthorIdInput ?? authorIdInput;
     setTitle(titleValue);
     setCategoryId(categoryValue);
+    setAuthorId(authorValue);
     setPage(0);
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }
+
+  async function toggleWishlist(bookId: number) {
+    if (!token) {
+      navigate(`/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`);
+      return;
+    }
+    try {
+      if (wishlistIds.has(bookId)) {
+        await removeFromWishlist(token, bookId);
+        setWishlistIds((current) => {
+          const next = new Set(current);
+          next.delete(bookId);
+          return next;
+        });
+        showToast("Removed from wishlist.", "success");
+      } else {
+        await addToWishlist(token, bookId);
+        setWishlistIds((current) => new Set([...current, bookId]));
+        showToast("Added to wishlist.", "success");
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Wishlist update failed";
+      showToast(message, "error");
+    }
+  }
+
+  async function toggleFavorite(bookId: number) {
+    if (!token) {
+      navigate(`/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`);
+      return;
+    }
+    try {
+      if (favoriteIds.has(bookId)) {
+        await removeFromFavorites(token, bookId);
+        setFavoriteIds((current) => {
+          const next = new Set(current);
+          next.delete(bookId);
+          return next;
+        });
+        showToast("Removed from favorites.", "success");
+      } else {
+        await addToFavorites(token, bookId);
+        setFavoriteIds((current) => new Set([...current, bookId]));
+        showToast("Added to favorites.", "success");
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Favorites update failed";
+      showToast(message, "error");
+    }
   }
 
   return (
@@ -189,6 +288,25 @@ export function BooksPage() {
               fullWidth
             />
             <TextField
+              label="Author"
+              select
+              value={authorIdInput}
+              onChange={(event) => {
+                const value = event.target.value;
+                setAuthorIdInput(value);
+                applyFilters(undefined, undefined, value);
+              }}
+              size="small"
+              sx={{ minWidth: { md: 180 } }}
+            >
+              <MenuItem value="">All authors</MenuItem>
+              {authors.map((author) => (
+                <MenuItem key={author.id} value={String(author.id)}>
+                  {author.name}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
               label="Category"
               select
               value={categoryIdInput}
@@ -224,8 +342,10 @@ export function BooksPage() {
               sx={{ minWidth: 88, height: 40 }}
               onClick={() => {
                 setTitleInput("");
+                setAuthorIdInput("");
                 setCategoryIdInput("");
                 setTitle("");
+                setAuthorId("");
                 setCategoryId("");
                 setPage(0);
               }}
@@ -270,76 +390,15 @@ export function BooksPage() {
             )
             : bookItems.map((book) => (
               <Grid key={book.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-                <Card
-                  sx={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    "&:hover": {
-                      transform: "translateY(-4px)",
-                      boxShadow: "0 20px 36px rgba(15, 15, 20, 0.12)"
-                    }
-                  }}
-                >
-                  <Box sx={{ width: "100%", pt: "120%", position: "relative", bgcolor: "rgba(0,0,0,0.02)" }}>
-                    <CardMedia
-                      component="img"
-                      image={book.imageUrl || "https://placehold.co/300x420?text=Book"}
-                      alt={book.title}
-                      sx={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "contain",
-                        p: 2
-                      }}
-                    />
-                  </Box>
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography variant="h6" sx={{ fontSize: "1rem", mb: 0.5 }}>
-                      {book.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                      {book.authorName || "Unknown author"}
-                    </Typography>
-                    <Typography variant="h6" color="primary">
-                      ${Number(book.price).toFixed(2)}
-                    </Typography>
-                  </CardContent>
-                  <CardActions>
-                    <Button
-                      component={Link}
-                      to={`/books/${book.id}`}
-                      variant="outlined"
-                      size="small"
-                    >
-                      View details
-                    </Button>
-                    {isAdmin ? (
-                      <Button
-                        component={Link}
-                        to="/admin/books"
-                        variant="contained"
-                        size="small"
-                      >
-                        Manage book
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="contained"
-                        size="small"
-                        startIcon={<AddShoppingCartOutlinedIcon />}
-                        onClick={() => onQuickAdd(book.id)}
-                        disabled={!isAuthenticated}
-                      >
-                        Add to cart
-                      </Button>
-                    )}
-                  </CardActions>
-                </Card>
+                <BookCard
+                  book={book}
+                  isAdmin={isAdmin}
+                  isWishlisted={wishlistIds.has(book.id)}
+                  isFavorite={favoriteIds.has(book.id)}
+                  onAddToCart={onQuickAdd}
+                  onToggleWishlist={toggleWishlist}
+                  onToggleFavorite={toggleFavorite}
+                />
               </Grid>
             ))}
         </Grid>

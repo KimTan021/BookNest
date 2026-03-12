@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -46,9 +47,10 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(message, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler({UnauthorizedException.class, BadCredentialsException.class})
+    @ExceptionHandler({UnauthorizedException.class, BadCredentialsException.class, DisabledException.class})
     public ResponseEntity<ApiError> handleUnauthorized(Exception ex) {
-        return buildErrorResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED);
+        String message = ex instanceof DisabledException ? "Account is deactivated" : ex.getMessage();
+        return buildErrorResponse(message, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(AccessDeniedException.class)

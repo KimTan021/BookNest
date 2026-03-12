@@ -39,6 +39,10 @@ public class User implements UserDetails {
     @Builder.Default
     private String role = "ROLE_USER";
 
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean active = true;
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Cart cart;
 
@@ -75,6 +79,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return active;
     }
 }

@@ -56,6 +56,7 @@ public class AdminBootstrap implements CommandLineRunner {
                 .email(adminEmail)
                 .password(passwordEncoder.encode(adminPassword))
                 .role("ROLE_ADMIN")
+                .active(true)
                 .build();
 
         User savedAdmin = userRepository.save(admin);

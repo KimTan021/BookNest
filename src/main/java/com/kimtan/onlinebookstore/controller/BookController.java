@@ -55,7 +55,7 @@ public class BookController {
     @GetMapping("/search")
     @Operation(
             summary = "Search books",
-            description = "Filters books by title and optionally by category.",
+            description = "Filters books by title, author, and/or category.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Search results returned"),
                     @ApiResponse(responseCode = "400", description = "Invalid search request", content = @Content(schema = @Schema(implementation = ApiError.class)))
@@ -64,6 +64,8 @@ public class BookController {
     public Page<BookResponseDTO> searchBooks(
             @Parameter(description = "Partial or full book title")
             @RequestParam(required = false) String title,
+            @Parameter(description = "Author identifier")
+            @RequestParam(required = false) Long authorId,
             @Parameter(description = "Category identifier")
             @RequestParam(required = false) Long categoryId,
             @Parameter(description = "Zero-based page index")
@@ -71,6 +73,6 @@ public class BookController {
             @Parameter(description = "Page size")
             @RequestParam(defaultValue = "10") int size) {
 
-        return bookService.searchBooks(title, categoryId, page, size);
+        return bookService.searchBooks(title, categoryId, authorId, page, size);
     }
 }

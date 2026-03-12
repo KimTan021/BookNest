@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import { Link } from "react-router-dom";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-import CircularProgress from "@mui/material/CircularProgress";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -21,10 +21,13 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ErrorOutlineOutlinedIcon from "@mui/icons-material/ErrorOutlineOutlined";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
+import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { TableSkeleton } from "../components/TableSkeleton";
 import {
@@ -54,6 +57,7 @@ export function AdminBooksPage() {
   const [authors, setAuthors] = useState<AdminAuthor[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
+  const [queryInput, setQueryInput] = useState("");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
   const [books, setBooks] = useState<PageResponse<Book> | null>(null);
@@ -69,6 +73,8 @@ export function AdminBooksPage() {
 
   const totalPages = books?.totalPages ?? 1;
   const currentPage = books ? books.number + 1 : page + 1;
+
+  const searchLabel = useMemo(() => (query ? `Results for "${query}"` : "All books"), [query]);
 
   const authorOptions = useMemo(() => authors, [authors]);
   const categoryOptions = useMemo(() => categories, [categories]);
@@ -115,6 +121,28 @@ export function AdminBooksPage() {
   useEffect(() => {
     loadBooks();
   }, [page, query]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setQuery((currentQuery) => {
+        if (currentQuery === queryInput) {
+          return currentQuery;
+        }
+        setPage(0);
+        return queryInput;
+      });
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [queryInput]);
+
+  function applySearch(nextQuery?: string) {
+    const value = nextQuery ?? queryInput;
+    setQuery(value);
+    setPage(0);
+  }
 
   async function openEdit(bookId: number) {
     if (!token) {
@@ -195,91 +223,152 @@ export function AdminBooksPage() {
   }
 
   return (
-    <Box component="section">
-      <Stack spacing={0.5} sx={{ mb: 2 }}>
-        <Typography variant="h4" component="h1">
-          Books
+    <Box component="section" className="animate-fade-in">
+      <Stack spacing={0.5} sx={{ mb: 4 }}>
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
+          Manage Books
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Edit or remove catalog items.
+        <Typography variant="body1" color="text.secondary">
+          Maintain your catalog, update prices, and track inventory levels.
         </Typography>
       </Stack>
 
-      <Card>
-        <CardContent>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }}>
+      <Card className="glass-card" sx={{ borderRadius: 3 }}>
+        <CardContent sx={{ p: 4 }}>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ md: "center" }} sx={{ mb: 3 }}>
             <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="h6">Catalog</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>Catalog Inventory</Typography>
               <Typography variant="body2" color="text.secondary">
-                Search by title and manage inventory.
+                {searchLabel}
               </Typography>
             </Box>
-            <TextField
-              label="Search by title"
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setPage(0);
-              }}
-              size="small"
-              InputProps={{ endAdornment: <SearchOutlinedIcon fontSize="small" /> }}
-            />
+            <Stack direction="row" spacing={2} alignItems="center">
+              <TextField
+                label="Search books..."
+                value={queryInput}
+                onChange={(event) => setQueryInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    applySearch(queryInput);
+                  }
+                }}
+                size="small"
+                sx={{ minWidth: 280 }}
+                InputProps={{ 
+                  startAdornment: <SearchOutlinedIcon fontSize="small" sx={{ mr: 1, color: "text.secondary" }} />,
+                  sx: { borderRadius: 2 }
+                }}
+              />
+              <Button 
+                component={Link} 
+                to="/admin/books/add" 
+                variant="contained" 
+                startIcon={<AddRoundedIcon />}
+                sx={{ borderRadius: 2, px: 3, height: 40, whiteSpace: 'nowrap' }}
+              >
+                Add Book
+              </Button>
+            </Stack>
           </Stack>
-          <Divider sx={{ my: 2 }} />
+          <Divider sx={{ mb: 3 }} />
           {status ? (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert severity="error" sx={{ mb: 3 }}>
               {status}
             </Alert>
           ) : null}
           {loading ? (
             <Box sx={{ py: 2 }}>
-              <TableSkeleton columns={5} rows={BOOK_PAGE_SIZE} />
+              <TableSkeleton columns={6} rows={BOOK_PAGE_SIZE} />
             </Box>
           ) : (
             <>
-              <Table size="small">
+              <Table size="medium">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Title</TableCell>
-                    <TableCell>Author</TableCell>
-                    <TableCell align="right">Price</TableCell>
-                    <TableCell align="right">Stock</TableCell>
-                    <TableCell align="right">Actions</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Cover</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Title</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Author</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>Price</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>Stock</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {books?.content.length ? (
-                    books.content.map((book) => (
-                      <TableRow key={book.id}>
-                        <TableCell>{book.title}</TableCell>
-                        <TableCell>{book.authorName}</TableCell>
-                        <TableCell align="right">${Number(book.price).toFixed(2)}</TableCell>
-                        <TableCell align="right">{book.stock}</TableCell>
-                        <TableCell align="right">
-                          <IconButton onClick={() => openEdit(book.id)} size="small" color="primary">
-                            <EditOutlinedIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton onClick={() => setDeleteId(book.id)} size="small" color="error">
-                            <DeleteOutlineOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                    books.content.map((book) => {
+                      const isLowStock = book.stock < 5;
+                      return (
+                        <TableRow key={book.id} hover sx={{ transition: "background-color 0.2s" }}>
+                          <TableCell sx={{ py: 1.5 }}>
+                            <Box
+                              component="img"
+                              src={book.imageUrl || "https://placehold.co/40x60?text=Book"}
+                              alt={book.title}
+                              sx={{ 
+                                width: 40, 
+                                height: 56, 
+                                objectFit: "cover", 
+                                borderRadius: 1,
+                                boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 500 }}>{book.title}</TableCell>
+                          <TableCell color="text.secondary">{book.authorName}</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 600 }}>
+                            ${Number(book.price).toFixed(2)}
+                          </TableCell>
+                          <TableCell align="right">
+                            <Box
+                              sx={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                px: 1.5,
+                                py: 0.5,
+                                borderRadius: 1,
+                                fontSize: "0.875rem",
+                                fontWeight: 700,
+                                bgcolor: isLowStock ? "rgba(211, 47, 47, 0.1)" : "rgba(46, 125, 50, 0.1)",
+                                color: isLowStock ? "error.main" : "success.main"
+                              }}
+                            >
+                              {book.stock}
+                              {isLowStock && <ErrorOutlineOutlinedIcon sx={{ ml: 0.5, fontSize: 16 }} />}
+                            </Box>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Stack direction="row" spacing={1} justifyContent="flex-end">
+                              <IconButton onClick={() => openEdit(book.id)} size="small" color="primary" title="Edit Book">
+                                <EditOutlinedIcon fontSize="small" />
+                              </IconButton>
+                              <IconButton onClick={() => setDeleteId(book.id)} size="small" color="error" title="Delete Book">
+                                <DeleteOutlineOutlinedIcon fontSize="small" />
+                              </IconButton>
+                            </Stack>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5}>No books found.</TableCell>
+                      <TableCell colSpan={6} sx={{ textAlign: "center", py: 4 }}>
+                        <Typography variant="body2" color="text.secondary">No books found.</Typography>
+                      </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
-              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 3 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Page {currentPage} of {Math.max(1, totalPages)}
+                  Showing {books?.content.length ?? 0} of {books?.totalElements ?? 0} books
                 </Typography>
                 <Pagination
                   count={Math.max(1, totalPages)}
                   page={currentPage}
                   onChange={(_, value) => setPage(value - 1)}
+                  color="primary"
+                  shape="rounded"
                 />
               </Stack>
             </>
